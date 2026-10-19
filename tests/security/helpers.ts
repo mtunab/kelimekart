@@ -56,7 +56,7 @@ function isTransient(value: unknown): boolean {
  * Ağdaki geçici kopmalarda (fetch failed) isteği birkaç kez yeniden dener.
  * Supabase istemcisi bu hatayı fırlatmak yerine `{ error }` olarak döndürdüğü için ikisine de bakılır.
  */
-export async function withRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+export async function withRetry<T>(fn: () => PromiseLike<T>, attempts = 4): Promise<T> {
   let last: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -104,15 +104,22 @@ export async function createTestUser(tag: string, displayName = `Test ${tag}`): 
 export async function deleteTestUsers(users: Array<{ id: string } | undefined>) {
   const admin = serviceClient();
   for (const user of users) {
-    if (user) await withRetry(() => admin.auth.admin.deleteUser(user.id));
+    if (!user) continue;
+    const { error } = await withRetry(() => admin.auth.admin.deleteUser(user.id));
+    if (error) throw new Error(`Test kullanıcısı silinemedi: ${error.message}`);
   }
 }
 
 /** Önceki yarıda kalmış çalıştırmalardan kalan test kullanıcılarını siler. */
 export async function deleteLeftoverTestUsers() {
   const admin = serviceClient();
-  const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  for (const user of data?.users ?? []) {
-    if (user.email?.startsWith(TEST_EMAIL_PREFIX)) await admin.auth.admin.deleteUser(user.id);
+  const { data, error } = await withRetry(() =>
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  );
+  if (error) throw new Error(`Test kullanıcıları listelenemedi: ${error.message}`);
+  for (const user of data.users) {
+    if (!user.email?.startsWith(TEST_EMAIL_PREFIX)) continue;
+    const result = await withRetry(() => admin.auth.admin.deleteUser(user.id));
+    if (result.error) throw new Error(`Test kullanıcısı silinemedi: ${result.error.message}`);
   }
 }

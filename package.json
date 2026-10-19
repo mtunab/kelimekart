@@ -18,7 +18,9 @@
     "db:push": "tsx scripts/db.ts push",
     "db:status": "tsx scripts/db.ts status",
     "check:bundle": "tsx scripts/check-bundle.ts",
-    "invite": "tsx scripts/invite-user.ts"
+    "invite": "tsx scripts/invite-user.ts",
+    "db:seed": "tsx scripts/db.ts seed",
+    "check:staged": "tsx scripts/check-staged-secrets.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -27,6 +29,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "ts-fsrs": "^5.4.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {

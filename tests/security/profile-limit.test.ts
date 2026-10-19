@@ -51,5 +51,5 @@ describe.skipIf(!hasDevEnv)("5 kişi sınırı", () => {
 
     const users = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     expect(users.data.users.some((user) => user.email === sixthEmail)).toBe(false);
-  });
+  }, 120_000); // art arda çok sayıda ağ isteği yapar
 });

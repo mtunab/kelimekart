@@ -37,4 +37,9 @@ Bağlantı **tek kullanımlıktır** ve yaklaşık **1 saat** geçerlidir.
 > e-posta ulaştırır. Arkadaşların bu e-postayı alabilmesi için kendi SMTP ayarı gerekir (bkz. Sınırlamalar).
 > O zamana kadar `pnpm invite --reset` kullan.
 
+## Performans notu
+
+Çalışma kuyruğu sorgusu `EXPLAIN ANALYZE` ile 5000 kartlık sahte veriyle (işlem sonunda geri alındı) ölçüldü:
+`card_progress_user_due_idx` (user_id, due) indeksi kullanılıyor, sorgu ~1 ms'de çalışıyor (2026-10-19).
+
 _Diğer bölümler (kullanım, yedekleme, yayın) sonraki aşamalarda eklenecek._

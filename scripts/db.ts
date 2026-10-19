@@ -3,6 +3,7 @@
  *
  *   pnpm db:status          → dev veritabanında hangi migration'lar uygulanmış
  *   pnpm db:push            → bekleyen migration'ları dev veritabanına uygular
+ *   pnpm db:seed            → dev'e örnek veriyi (supabase/seed.sql) uygular; prod'da çalışmaz
  *   pnpm db:push -- --prod  → prod'a uygular (.env.prod.local, onay ister)
  *
  * Bağlantı adresi `SUPABASE_DB_URL` değişkeninden okunur ve asla ekrana yazılmaz.
@@ -18,8 +19,12 @@ const args = process.argv.slice(2);
 const command = args[0];
 const isProd = args.includes("--prod");
 
-if (command !== "push" && command !== "status") {
-  console.error("Kullanım: tsx scripts/db.ts <push|status> [--prod]");
+if (command !== "push" && command !== "status" && command !== "seed") {
+  console.error("Kullanım: tsx scripts/db.ts <push|status|seed> [--prod]");
+  process.exit(1);
+}
+if (command === "seed" && isProd) {
+  console.error("Örnek veri prod'a asla yazılmaz.");
   process.exit(1);
 }
 
@@ -62,7 +67,9 @@ async function main() {
   const cliArgs =
     command === "push"
       ? ["db", "push", "--db-url", dbUrl, "--include-all"]
-      : ["migration", "list", "--db-url", dbUrl];
+      : command === "seed"
+        ? ["db", "push", "--db-url", dbUrl, "--include-all", "--include-seed"]
+        : ["migration", "list", "--db-url", dbUrl];
 
   console.log(`→ ${isProd ? "PROD" : "dev"} veritabanı: ${command}`);
   const result = spawnSync(process.execPath, [cliPath, ...cliArgs], {
