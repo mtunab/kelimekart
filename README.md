@@ -20,4 +20,21 @@ Ayrıntılı proje kuralları: [CLAUDE.md](CLAUDE.md).
 | `pnpm db:status`  | Dev veritabanında hangi migration'lar uygulanmış                                                      |
 | `pnpm db:push`    | Bekleyen migration'ları dev veritabanına uygular                                                      |
 
-_Diğer bölümler (kullanım, davet, yedekleme, yayın) sonraki aşamalarda eklenecek._
+## Gruba kişi ekleme (davet)
+
+Herkese açık kayıt kapalıdır; en fazla 5 kişi olabilir.
+
+```bash
+pnpm invite ali@ornek.com "Ali"            # dev'de kişi ekler
+pnpm invite ali@ornek.com "Ali" --prod     # canlı sitede kişi ekler
+pnpm invite --reset ali@ornek.com --prod   # şifresini unutan kişiye yeni bağlantı
+```
+
+Komut ekrana bir bağlantı yazar. Bağlantıyı kişiye WhatsApp vb. ile gönder; kişi tıklayıp kendi şifresini belirler.
+Bağlantı **tek kullanımlıktır** ve yaklaşık **1 saat** geçerlidir.
+
+> Not: "Şifremi unuttum" sayfası e-posta gönderir, ancak Supabase'in ücretsiz e-posta servisi yalnızca proje ekibine
+> e-posta ulaştırır. Arkadaşların bu e-postayı alabilmesi için kendi SMTP ayarı gerekir (bkz. Sınırlamalar).
+> O zamana kadar `pnpm invite --reset` kullan.
+
+_Diğer bölümler (kullanım, yedekleme, yayın) sonraki aşamalarda eklenecek._

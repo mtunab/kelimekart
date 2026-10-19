@@ -37,3 +37,12 @@ describe("depo güvenliği", () => {
     expect([...names].sort()).toEqual(names);
   });
 });
+
+describe("ortam dosyaları", () => {
+  it("Next.js'in kendiliğinden okuyacağı prod/dev ortam dosyası yok", () => {
+    // .env.production(.local) olsaydı `next build`/`next start` dev yerine prod'a bağlanırdı.
+    const autoLoaded = [".env", ".env.production", ".env.production.local", ".env.development"];
+    const present = readdirSync(root).filter((name) => autoLoaded.includes(name));
+    expect(present).toEqual([]);
+  });
+});

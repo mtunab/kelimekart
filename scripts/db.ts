@@ -3,7 +3,7 @@
  *
  *   pnpm db:status          → dev veritabanında hangi migration'lar uygulanmış
  *   pnpm db:push            → bekleyen migration'ları dev veritabanına uygular
- *   pnpm db:push -- --prod  → prod'a uygular (.env.production.local, onay ister)
+ *   pnpm db:push -- --prod  → prod'a uygular (.env.prod.local, onay ister)
  *
  * Bağlantı adresi `SUPABASE_DB_URL` değişkeninden okunur ve asla ekrana yazılmaz.
  */
@@ -23,7 +23,7 @@ if (command !== "push" && command !== "status") {
   process.exit(1);
 }
 
-const envFile = isProd ? ".env.production.local" : ".env.local";
+const envFile = isProd ? ".env.prod.local" : ".env.local";
 config({ path: envFile, quiet: true });
 
 const dbUrlTemplate = process.env.SUPABASE_DB_URL;

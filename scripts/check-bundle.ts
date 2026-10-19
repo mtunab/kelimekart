@@ -4,7 +4,7 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { config } from "dotenv";
+import { config, parse } from "dotenv";
 
 config({ path: ".env.local", quiet: true });
 
@@ -12,6 +12,13 @@ const staticDir = path.join(".next", "static");
 const secrets = [process.env.SUPABASE_SERVICE_ROLE_KEY, process.env.SUPABASE_DB_PASSWORD].filter(
   (value): value is string => !!value && value.length >= 8,
 );
+// Dev derlemesinde prod adresi görünmemeli (yanlış ortam dosyası okunmuş demektir).
+try {
+  const prodUrl = parse(readFileSync(".env.prod.local"))["NEXT_PUBLIC_SUPABASE_URL"];
+  if (prodUrl && prodUrl !== process.env.NEXT_PUBLIC_SUPABASE_URL) secrets.push(prodUrl);
+} catch {
+  // prod dosyası yoksa kontrol gerekmez
+}
 const patterns = [
   /sb_secret_[A-Za-z0-9_-]{8,}/,
   /SUPABASE_SERVICE_ROLE_KEY/,
