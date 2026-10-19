@@ -13,10 +13,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm check:bundle",
     "verify:e2e": "pnpm verify && pnpm test:e2e",
     "db:push": "tsx scripts/db.ts push",
-    "db:status": "tsx scripts/db.ts status"
+    "db:status": "tsx scripts/db.ts status",
+    "check:bundle": "tsx scripts/check-bundle.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

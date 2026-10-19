@@ -7,7 +7,7 @@ Ayrıntılı proje kuralları: [CLAUDE.md](CLAUDE.md).
 
 1. Node.js 22+ ve pnpm gerekir.
 2. `pnpm install`
-3. `.env.example` dosyasını `.env.local` adıyla kopyala, **dev** Supabase bilgileriyle doldur.
+3. `.env.example` dosyasını `.env.local` adıyla kopyala, **dev** Supabase bilgileriyle doldur. Veritabanı şifresi `SUPABASE_DB_PASSWORD` satırına olduğu gibi yazılır.
 4. `pnpm db:push` — veritabanı şemasını dev projesine uygular.
 5. `pnpm dev` — http://localhost:3000
 

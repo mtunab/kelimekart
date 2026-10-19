@@ -12,6 +12,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import readline from "node:readline/promises";
 import { config } from "dotenv";
+import { buildDbUrl } from "./lib/db-url";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -25,9 +26,17 @@ if (command !== "push" && command !== "status") {
 const envFile = isProd ? ".env.production.local" : ".env.local";
 config({ path: envFile, quiet: true });
 
-const dbUrl = process.env.SUPABASE_DB_URL;
-if (!dbUrl) {
+const dbUrlTemplate = process.env.SUPABASE_DB_URL;
+const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+if (!dbUrlTemplate) {
   console.error(`SUPABASE_DB_URL bulunamadı (${envFile} dosyasına bakıldı).`);
+  process.exit(1);
+}
+let dbUrl: string;
+try {
+  dbUrl = buildDbUrl(dbUrlTemplate, dbPassword);
+} catch (error) {
+  console.error((error as Error).message);
   process.exit(1);
 }
 
@@ -52,8 +61,8 @@ async function main() {
   );
   const cliArgs =
     command === "push"
-      ? ["db", "push", "--db-url", dbUrl!, "--include-all"]
-      : ["migration", "list", "--db-url", dbUrl!];
+      ? ["db", "push", "--db-url", dbUrl, "--include-all"]
+      : ["migration", "list", "--db-url", dbUrl];
 
   console.log(`→ ${isProd ? "PROD" : "dev"} veritabanı: ${command}`);
   const result = spawnSync(process.execPath, [cliPath, ...cliArgs], {
@@ -61,7 +70,11 @@ async function main() {
     encoding: "utf8",
   });
   // CLI hata mesajlarında bağlantı adresi geçebilir; şifre sızmasın diye gizle.
-  const mask = (text: string) => text.split(dbUrl!).join("<SUPABASE_DB_URL>");
+  const secrets = [dbUrl, dbPassword, dbPassword && encodeURIComponent(dbPassword)].filter(
+    (value): value is string => !!value,
+  );
+  const mask = (text: string) =>
+    secrets.reduce((out, secret) => out.split(secret).join("<GİZLİ>"), text);
   process.stdout.write(mask(result.stdout ?? ""));
   process.stderr.write(mask(result.stderr ?? ""));
   process.exit(result.status ?? 1);
