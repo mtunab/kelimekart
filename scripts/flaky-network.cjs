@@ -52,8 +52,11 @@ if (originalFetch && !originalFetch.__kkRetry) {
 
     let lastError;
     for (let attempt = 0; attempt < 5; attempt++) {
+      // Cevapsız kalan isteği 10 sn sonra kes ve yeniden dene (takılan bağlantılar için).
+      const signals = [AbortSignal.timeout(10_000)];
+      if (init && init.signal) signals.push(init.signal);
       try {
-        return await originalFetch(input, init);
+        return await originalFetch(input, { ...init, signal: AbortSignal.any(signals) });
       } catch (error) {
         if (init && init.signal && init.signal.aborted) throw error;
         lastError = error;

@@ -106,7 +106,10 @@ test.describe("ana akış (masaüstü)", () => {
     expect(csv.split("\r\n").filter(Boolean)).toHaveLength(14);
 
     // Çalışma: günlük yeni limit 10 → 10 kart. Klavyeyle: Boşluk = çevir, 4 = Kolay.
-    await page.getByRole("link", { name: "Çalış" }).click();
+    await page
+      .getByRole("navigation", { name: "Deste işlemleri" })
+      .getByRole("link", { name: "Çalış" })
+      .click();
     await expect(page.getByTestId("study-card")).toBeVisible();
     await expect(page.getByText("10 yeni")).toBeVisible();
 
@@ -135,6 +138,22 @@ test.describe("ana akış (masaüstü)", () => {
     await page.goto("/");
     await expect(page.getByText("3 yeni")).toBeVisible();
 
+    // İstatistik güncellendi: 10 tekrar (geri alınan sayılmaz), %100, 1 günlük seri, panoda Selin.
+    await page.goto("/stats");
+    const today = page.locator("dl > div").filter({ hasText: "Bugün" });
+    await expect(today.locator("dd").first()).toHaveText("10");
+    await expect(
+      page.locator("dl > div").filter({ hasText: "Doğruluk" }).locator("dd").first(),
+    ).toHaveText("%100");
+    await expect(
+      page.locator("dl > div").filter({ hasText: "Seri" }).locator("dd").first(),
+    ).toHaveText("1 gün");
+    await expect(page.getByRole("listitem").filter({ hasText: "Selin (sen)" })).toContainText(
+      "10 tekrar",
+    );
+    const deckRow = page.getByRole("row").filter({ hasText: "E2E Destesi" });
+    await expect(deckRow.getByRole("cell").nth(1)).toHaveText("3"); // yeni
+
     await logout(page);
   });
 });
@@ -162,7 +181,10 @@ test.describe("kısa akış (mobil 390px)", () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
 
-    await page.getByRole("link", { name: "Çalış" }).click();
+    await page
+      .getByRole("navigation", { name: "Deste işlemleri" })
+      .getByRole("link", { name: "Çalış" })
+      .click();
     const card = page.getByTestId("study-card");
     for (let i = 0; i < 3; i++) {
       await expect(card).toBeVisible();

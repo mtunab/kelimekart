@@ -315,4 +315,9 @@ Verdiğin her önemli teknik kararı (ör. undo yöntemi, FSRS ayarları, ek pak
 | 2026-10-19 | Hızlı ekleme: Enter'da alanlar hemen boşalır, kayıt arka planda, düğme hiç kilitlenmez; liste yazma durunca bir kez yenilenir | Kilitlenen düğme tarayıcının Enter ile göndermesini engelliyordu (e2e testi yakaladı). |
 | 2026-10-19 | Aynı kelime anahtarı `front_key` = küçük harf + U+0307 silinir (İyi=iyi, ılık≠ilik); arama `search_fold` ayrıca ı→i yapar | Postgres `lower('İ')` birleşik nokta ekliyordu; arama ve tekrar kontrolü Türkçede bozuluyordu. |
 | 2026-10-19 | Testlerde `scripts/flaky-network.cjs` (DNS hafızası + fetch yeniden deneme), Playwright bekleme 15 sn | Geliştirme sırasında ev ağı %80'e varan paket kaybı yaşadı; yalnızca test/geliştirme sunucusuna yüklenir, üretime girmez. |
+| 2026-10-19 | Kart durumları: Yeni (cevapsız), Öğreniliyor (öğrenme/yeniden öğrenme ya da aralık < 21 gün), Olgun (aralık ≥ 21 gün) | Anki'nin "olgun" eşiği; kullanıcıya tanıdık. |
+| 2026-10-19 | Grup panosu `group_board()` security definer, yalnızca ad + bugünkü tekrar + seri + "sen misin" döndürür | RLS başkasının kayıtlarını gizliyor; pano için gereken en az bilgi ayrı fonksiyondan. |
+| 2026-10-19 | Grafikler bağımlılıksız SVG (`components/bar-chart.tsx`), ekran okuyucu için gizli tablo | "Ağır kütüphane ekleme" kuralı. |
+| 2026-10-19 | Tema çerezde (`kk-theme`: system/light/dark); "sistem" için sayfa çizilmeden önce çalışan küçük satır içi betik; Tailwind `dark` sınıf tabanlı | Açık/koyu yanıp sönme olmasın; sunucu tema bilgisini ilk HTML'e koyabilsin. |
+| 2026-10-19 | Telefonda alt menü (4 sekme), masaüstünde üst menü; mobilde `scroll-padding-bottom` | Tek elle kullanım; sabit menü düğmeleri örtmesin (e2e yakaladı). |
 | 2026-10-19 | Güvenlik testleri Vitest içinde `tests/security/` altında, dosyalar sırayla çalışır | Aynı dev veritabanını paylaştıkları için birbirini bozmasınlar. |
