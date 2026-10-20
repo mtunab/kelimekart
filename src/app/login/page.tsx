@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AuthCard } from "@/components/auth-card";
 import { Alert } from "@/components/ui/alert";
 import { safeNextPath } from "@/lib/redirect";
@@ -25,6 +26,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
         KelimeKart davetle kullanılır. Hesabın yoksa grup yöneticisinden davet iste.
       </p>
+      <Link
+        href="/yardim"
+        className="self-center rounded-md px-2 py-2 text-sm text-indigo-700 underline-offset-4 hover:underline dark:text-indigo-300"
+      >
+        Nasıl kullanılır?
+      </Link>
     </AuthCard>
   );
 }

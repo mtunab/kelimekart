@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
 import { buttonClass } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
@@ -17,7 +18,12 @@ export default async function SettingsPage() {
 
   return (
     <PageShell displayName={profile.display_name}>
-      <h1 className="text-2xl font-semibold tracking-tight">Ayarlar</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Ayarlar</h1>
+        <Link href="/yardim" className={buttonClass("secondary", "text-sm")}>
+          Yardım
+        </Link>
+      </div>
 
       <section
         aria-labelledby="profil"
