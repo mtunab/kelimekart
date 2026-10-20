@@ -124,7 +124,10 @@ test.describe("ana akış (masaüstü)", () => {
     // İlk cevabı geri al: kart geri gelir.
     const firstFront = await page.getByTestId("study-card").locator("p").first().innerText();
     await page.keyboard.press("Space");
-    await expect(page.getByRole("button", { name: /Easy/ })).toBeVisible();
+    await expect(page.getByTestId("study-card")).toHaveAttribute("data-flipped", "true");
+    // Puan düğmeleri yok; kaydırma ipucu aralıkları gösterir.
+    await expect(page.getByText(/← Again · \d+m/)).toBeVisible();
+    await expect(page.getByRole("button", { name: /^(Again|Hard|Good|Easy)/ })).toHaveCount(0);
     await page.keyboard.press("4");
     await expect(page.getByText("9 new")).toBeVisible();
     await page.keyboard.press("z");
@@ -134,7 +137,7 @@ test.describe("ana akış (masaüstü)", () => {
     for (let i = 0; i < 10; i++) {
       await expect(page.getByTestId("study-card")).toBeVisible();
       await page.keyboard.press("Space");
-      await expect(page.getByRole("button", { name: /Easy/ })).toBeVisible();
+      await expect(page.getByTestId("study-card")).toHaveAttribute("data-flipped", "true");
       await page.keyboard.press("4");
     }
     await expect(page.getByRole("heading", { name: "Session complete!" })).toBeVisible();
@@ -208,7 +211,7 @@ test.describe("kısa akış (mobil 390px)", () => {
     for (let i = 0; i < 3; i++) {
       await expect(card).toBeVisible();
       await card.click(); // dokun = çevir
-      await expect(page.getByRole("button", { name: /Good/ })).toBeVisible();
+      await expect(card).toHaveAttribute("data-flipped", "true");
       const box = (await card.boundingBox())!;
       const y = box.y + box.height / 2;
       const x = box.x + box.width / 2;

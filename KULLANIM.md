@@ -24,17 +24,18 @@ Address: **https://kelimekart-five.vercel.app** · This guide is also in the app
 ## 3. Studying
 
 The **Study** tab (home page) shows what's waiting today. Tap **Start studying**, look at the word, say the meaning
-in your head, then flip the card and pick how well you remembered:
+in your head, then flip the card and tell the app how well you remembered:
 
-| Button    | When                          | Key |
-| --------- | ----------------------------- | --- |
-| **Again** | I didn't remember             | 1   |
-| **Hard**  | I remembered, but it was hard | 2   |
-| **Good**  | I remembered                  | 3   |
-| **Easy**  | I knew it instantly           | 4   |
+| Answer    | When                          | How                 |
+| --------- | ----------------------------- | ------------------- |
+| **Again** | I didn't remember             | Swipe left · key 1  |
+| **Hard**  | I remembered, but it was hard | Key 2               |
+| **Good**  | I remembered                  | Swipe right · key 3 |
+| **Easy**  | I knew it instantly           | Key 4               |
 
-- Under each button you'll see when the card comes back ("10m", "3d"…). Be honest; the app handles the rest.
-- **Flip:** tap the card or press **Space**. **On a phone:** after flipping, swipe the card **right = Good**, **left = Again**.
+- Under the card you'll see when it comes back for each answer ("10m", "3d"…). Be honest; the app handles the rest.
+- **Flip:** tap the card or press **Space**. Then drag the card **right = Good**, **left = Again** (a mouse works too).
+  On a keyboard, **1–4** gives all four answers.
 - **🔊 Listen** reads the word aloud. **↶ Undo** (**Z** on a keyboard) takes back your last answer.
 - By default you get **10 new cards** a day plus the reviews that are due. At the end you see a summary: cards, accuracy, tomorrow's load.
 - A new day starts at **4:00 AM**. Study at least one card every day to grow your **streak (🔥)**; skip a day and it resets.

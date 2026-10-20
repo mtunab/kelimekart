@@ -15,7 +15,6 @@ import { buttonClass } from "@/components/ui/button";
 import {
   formatInterval,
   fromFsrsCard,
-  GRADE_LABELS,
   GRADES,
   previewDueDates,
   review,
@@ -55,13 +54,6 @@ type ExitDir = { x: number; y: number };
 const LEARN_AHEAD_MS = 20 * 60_000;
 const SWIPE_DISTANCE = 100;
 const SWIPE_VELOCITY = 600;
-
-const GRADE_STYLES: Record<Grade, string> = {
-  1: "bg-red-600 hover:bg-red-700 text-white",
-  2: "bg-amber-500 hover:bg-amber-600 text-white",
-  3: "bg-green-600 hover:bg-green-700 text-white",
-  4: "bg-sky-600 hover:bg-sky-700 text-white",
-};
 
 const EXIT_BY_GRADE: Record<Grade, ExitDir> = {
   1: { x: -1, y: 0 },
@@ -316,6 +308,7 @@ export function StudySession({
                 key={`${current.cardId}-${turn}`}
                 item={current}
                 flipped={flipped}
+                intervals={previews}
                 onFlip={() => setFlipped(true)}
                 onSwipe={answer}
               />
@@ -345,33 +338,18 @@ export function StudySession({
 
           <AnimatePresence mode="wait" initial={false}>
             {flipped ? (
-              <m.div
-                key="grades"
-                className="grid grid-cols-4 gap-2"
-                role="group"
-                aria-label="How well did you remember?"
-                initial="hidden"
-                animate="shown"
+              // Puan düğmeleri yok (Tuna'nın isteği): telefonda kaydır, klavyede 1-4.
+              <m.p
+                key="swipe-hint"
+                className="flex min-h-14 items-center justify-between rounded-2xl border border-dashed border-zinc-300 px-4 text-sm font-medium dark:border-zinc-700"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                variants={{ shown: { transition: { staggerChildren: 0.05 } } }}
               >
-                {GRADES.map((grade) => (
-                  <m.button
-                    key={grade}
-                    type="button"
-                    onClick={() => answer(grade)}
-                    variants={{
-                      hidden: { opacity: 0, y: 14, scale: 0.9 },
-                      shown: { opacity: 1, y: 0, scale: 1 },
-                    }}
-                    whileTap={{ scale: 0.92 }}
-                    className={`flex min-h-14 flex-col items-center justify-center rounded-xl px-1 py-2 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${GRADE_STYLES[grade]}`}
-                  >
-                    <span>{GRADE_LABELS[grade]}</span>
-                    <span className="text-xs opacity-90">{previews?.[grade]}</span>
-                  </m.button>
-                ))}
-              </m.div>
+                <span className="text-red-700 dark:text-red-300">← Again · {previews?.[1]}</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">swipe</span>
+                <span className="text-green-700 dark:text-green-300">Good · {previews?.[3]} →</span>
+              </m.p>
             ) : (
               <m.button
                 key="show"
@@ -388,7 +366,7 @@ export function StudySession({
             )}
           </AnimatePresence>
           <p className="hidden text-center text-xs text-zinc-500 sm:block dark:text-zinc-400">
-            Shortcuts: Space = flip · 1–4 = rate · Z = undo
+            Keys: Space = flip · 1 Again · 2 Hard · 3 Good · 4 Easy · Z = undo
           </p>
           <p className="text-center text-xs text-zinc-500 sm:hidden dark:text-zinc-400">
             Tap to flip, then swipe right = Good, left = Again
@@ -466,15 +444,18 @@ export function StudySession({
 /**
  * Çevrilebilen kart. Ön yüz: kelime. Arka yüz: kelime + anlam + örnek + not.
  * Dokun/boşluk = 3B çevir. Çevrildikten sonra sürüklenebilir: sağa = İyi, sola = Tekrar.
+ * Damgalarda kartın bir sonraki gösterim aralığı yazar.
  */
 function FlipCard({
   item,
   flipped,
+  intervals,
   onFlip,
   onSwipe,
 }: {
   item: QueueItem;
   flipped: boolean;
+  intervals: Record<Grade, string> | null;
   onFlip: () => void;
   onSwipe: (grade: Grade) => void;
 }) {
@@ -488,6 +469,7 @@ function FlipCard({
   return (
     <m.div
       data-testid={isPresent ? "study-card" : undefined}
+      data-flipped={flipped}
       aria-hidden={isPresent ? undefined : true}
       className={`relative w-full touch-pan-y select-none [perspective:1200px] ${
         flipped ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
@@ -514,14 +496,14 @@ function FlipCard({
         style={{ opacity: againOpacity }}
         className="pointer-events-none absolute top-4 right-4 z-10 rotate-12 rounded-lg border-2 border-red-600 px-2 py-0.5 text-sm font-bold text-red-600"
       >
-        AGAIN
+        AGAIN{intervals ? <span className="ml-1 font-medium">{intervals[1]}</span> : null}
       </m.span>
       <m.span
         aria-hidden="true"
         style={{ opacity: goodOpacity }}
         className="pointer-events-none absolute top-4 left-4 z-10 -rotate-12 rounded-lg border-2 border-green-600 px-2 py-0.5 text-sm font-bold text-green-600"
       >
-        GOOD
+        GOOD{intervals ? <span className="ml-1 font-medium">{intervals[3]}</span> : null}
       </m.span>
 
       <m.div

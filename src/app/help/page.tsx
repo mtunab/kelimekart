@@ -73,26 +73,26 @@ export default function HelpPage() {
         <p>
           The <strong>Study</strong> tab shows what&apos;s waiting today. Tap{" "}
           <em>Start studying</em>, look at the word, say the meaning in your head, flip the card and
-          pick how well you remembered:
+          tell the app how well you remembered:
         </p>
         <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-100 dark:bg-zinc-900">
               <tr>
-                <th className="p-2">Button</th>
+                <th className="p-2">Answer</th>
                 <th className="p-2">When</th>
-                <th className="p-2">Key</th>
+                <th className="p-2">How</th>
               </tr>
             </thead>
             <tbody>
               {[
-                ["Again", "I didn't remember", "1"],
-                ["Hard", "I remembered, but it was hard", "2"],
-                ["Good", "I remembered", "3"],
-                ["Easy", "I knew it instantly", "4"],
-              ].map(([button, when, key]) => (
-                <tr key={button} className="border-t border-zinc-200 dark:border-zinc-800">
-                  <td className="p-2 font-medium">{button}</td>
+                ["Again", "I didn't remember", "Swipe left · key 1"],
+                ["Hard", "I remembered, but it was hard", "Key 2"],
+                ["Good", "I remembered", "Swipe right · key 3"],
+                ["Easy", "I knew it instantly", "Key 4"],
+              ].map(([answer, when, key]) => (
+                <tr key={answer} className="border-t border-zinc-200 dark:border-zinc-800">
+                  <td className="p-2 font-medium">{answer}</td>
                   <td className="p-2">{when}</td>
                   <td className="p-2">{key}</td>
                 </tr>
@@ -102,12 +102,12 @@ export default function HelpPage() {
         </div>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Under each button you&apos;ll see when the card comes back. Be honest; the app handles
-            the rest.
+            Under the card you&apos;ll see when it comes back for each answer. Be honest; the app
+            handles the rest.
           </li>
           <li>
-            <strong>Flip:</strong> tap the card or press Space. <strong>On a phone:</strong> after
-            flipping, swipe right = Good, swipe left = Again.
+            <strong>Flip:</strong> tap the card or press Space. Then drag the card: right = Good,
+            left = Again (works with a mouse too). On a keyboard, 1–4 gives all four answers.
           </li>
           <li>
             <strong>🔊 Listen</strong> reads the word aloud. <strong>↶ Undo</strong> (Z on a
