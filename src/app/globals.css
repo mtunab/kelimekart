@@ -3,34 +3,102 @@
 /* Koyu tema <html class="dark"> ile açılır (ayarlardan: açık / koyu / sistem). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Tema: neo-brütal pop. Mürekkep renginde kalın kenarlar, bulanıksız sert gölgeler,
+ * düz renk blokları. Koyu temada mürekkep ile kağıt yer değiştirir; renk blokları
+ * aynı kalır ve üstlerindeki yazı her zaman siyahtır (kontrast için).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fff8e7;
+  --surface: #ffffff;
+  --ink: #111111;
+  --ink-soft: #4a4540;
+  --focus: #2f5bff;
   color-scheme: light;
 }
 
 :root.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --paper: #141210;
+  --surface: #221f1c;
+  --ink: #fff8e7;
+  --ink-soft: #cfc6b6;
+  --focus: #9db4ff;
   color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-pink: #ff90e8;
+  --color-yellow: #ffc900;
+  --color-teal: #23a094;
+  --color-blue: #90a8ed;
+  --color-red: #ff6b6b;
+  --color-on-accent: #111111;
+  --font-sans: "Space Grotesk Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --shadow-hard-sm: 3px 3px 0 var(--ink);
+  --shadow-hard: 4px 4px 0 var(--ink);
+  --shadow-hard-lg: 6px 6px 0 var(--ink);
+}
+
+/* Kalın kenarlı, sert gölgeli kutu (kartlar, paneller). */
+@utility brutal-card {
+  border: 3px solid var(--ink);
+  border-radius: 1.125rem;
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+/* Gölgesiz ince kutu (liste satırları, küçük kutular). */
+@utility brutal-box {
+  border: 2.5px solid var(--ink);
+  border-radius: 0.875rem;
+  background: var(--surface);
+}
+
+/* Basılabilir öğe: üstüne gelince kalkar, basınca gölgesine gömülür. */
+@utility press {
+  box-shadow: 4px 4px 0 var(--ink);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+  &:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  &:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+}
+
+@utility press-sm {
+  box-shadow: 3px 3px 0 var(--ink);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+  &:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
 }
 
 /* Klavyeyle gezinirken odak halkası her zaman görünsün. */
 :focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 /* Hareket hassasiyeti olanlar için animasyonları kapat. */
@@ -44,6 +112,6 @@ body {
 /* Telefonda alt menü sabit: odaklanan/kaydırılan öğe menünün altında kalmasın. */
 @media (max-width: 639px) {
   html {
-    scroll-padding-bottom: 6rem;
+    scroll-padding-bottom: 7rem;
   }
 }

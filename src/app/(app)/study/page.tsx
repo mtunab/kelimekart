@@ -55,16 +55,17 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
       <div className="flex items-center justify-between gap-2">
         <Link
           href={deckId ? `/decks/${deckId}` : "/"}
-          className="rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+          className="rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
         >
           ← {deckName ?? "Home"}
         </Link>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-          {deckName ? "This deck" : "All decks"}
-        </span>
+        <span className="text-ink-soft text-sm">{deckName ? "This deck" : "All decks"}</span>
       </div>
       {queueResult.error ? (
-        <p role="alert" className="text-red-700 dark:text-red-300">
+        <p
+          role="alert"
+          className="border-ink bg-red text-on-accent rounded-xl border-[2.5px] p-3 font-bold"
+        >
           Couldn&apos;t load your cards. Check your connection and refresh the page.
         </p>
       ) : (

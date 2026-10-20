@@ -19,27 +19,21 @@ export default async function SettingsPage() {
   return (
     <PageShell>
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Settings</h1>
         <Link href="/help" className={buttonClass("secondary", "text-sm")}>
           Help
         </Link>
       </div>
 
-      <section
-        aria-labelledby="profile"
-        className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"
-      >
-        <h2 id="profile" className="mb-3 text-lg font-semibold">
+      <section aria-labelledby="profile" className="brutal-card p-4">
+        <h2 id="profile" className="mb-3 text-xl font-bold">
           Profile &amp; study
         </h2>
         <ProfileForm profile={profile} zones={zones} />
       </section>
 
-      <section
-        aria-labelledby="theme"
-        className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"
-      >
-        <h2 id="theme" className="mb-3 text-lg font-semibold">
+      <section aria-labelledby="theme" className="brutal-card p-4">
+        <h2 id="theme" className="mb-3 text-xl font-bold">
           Theme
         </h2>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Choose theme">
@@ -58,14 +52,11 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <section
-        aria-labelledby="password-heading"
-        className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800"
-      >
-        <h2 id="password-heading" className="mb-1 text-lg font-semibold">
+      <section aria-labelledby="password-heading" className="brutal-card p-4">
+        <h2 id="password-heading" className="mb-1 text-xl font-bold">
           Change password
         </h2>
-        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-ink-soft mb-3 text-sm">
           Your username: <strong>{profile.username}</strong>
         </p>
         <PasswordForm />

@@ -65,11 +65,11 @@ export function CardEditForm({
         <SubmitButton pendingText="Saving…">Save</SubmitButton>
       </form>
 
-      <form action={setCardArchived} className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <form action={setCardArchived} className="border-ink border-t-[2.5px] pt-4">
         <input type="hidden" name="deckId" value={deck.id} />
         <input type="hidden" name="cardId" value={card.id} />
         <input type="hidden" name="archived" value={String(!card.archived)} />
-        <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-ink-soft mb-2 text-sm">
           {card.archived
             ? "This card is archived and won't appear in your study queue."
             : "Archiving doesn't delete the card; it just removes it from the study queue."}
@@ -95,7 +95,7 @@ function TextArea({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <label htmlFor={id} className="text-sm font-bold">
         {label}
       </label>
       <textarea

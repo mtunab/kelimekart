@@ -4,7 +4,7 @@
 export function BarChart({
   title,
   data,
-  color = "fill-indigo-500",
+  color = "fill-teal",
 }: {
   title: string;
   data: { label: string; value: number; hint?: string }[];
@@ -15,9 +15,7 @@ export function BarChart({
 
   return (
     <figure className="flex flex-col gap-2">
-      <figcaption className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        {title}
-      </figcaption>
+      <figcaption className="text-sm font-bold">{title}</figcaption>
       <svg
         viewBox="0 0 100 44"
         className="h-36 w-full"
@@ -35,7 +33,9 @@ export function BarChart({
                 width={barWidth * 0.7}
                 height={Math.max(h, d.value > 0 ? 0.8 : 0)}
                 rx={0.8}
-                className={color}
+                className={`${color} stroke-ink`}
+                strokeWidth={2}
+                vectorEffect="non-scaling-stroke"
               >
                 <title>{`${d.hint ?? d.label}: ${d.value}`}</title>
               </rect>
@@ -47,18 +47,19 @@ export function BarChart({
           y1="38.2"
           x2="100"
           y2="38.2"
-          className="stroke-zinc-300 dark:stroke-zinc-700"
-          strokeWidth="0.3"
+          className="stroke-ink"
+          strokeWidth="2.5"
+          vectorEffect="non-scaling-stroke"
         />
       </svg>
       <div
-        className="grid text-center text-[10px] text-zinc-500 dark:text-zinc-400"
+        className="text-ink-soft grid text-center text-[11px]"
         style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}
         aria-hidden="true"
       >
         {data.map((d) => (
           <span key={d.label} className="truncate">
-            <span className="block font-medium text-zinc-700 dark:text-zinc-300">{d.value}</span>
+            <span className="text-ink block font-bold">{d.value}</span>
             {d.label}
           </span>
         ))}

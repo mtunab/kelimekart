@@ -10,13 +10,13 @@ export default function HelpPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6">
       <Link
         href="/"
-        className="self-start rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+        className="self-start rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         ← KelimeKart
       </Link>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">User guide</h1>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+        <h1 className="text-4xl font-bold tracking-tight">User guide</h1>
+        <p className="text-ink-soft mt-1">
           KelimeKart helps you memorize words for good: it shows each card again right before
           you&apos;d forget it.
         </p>
@@ -51,10 +51,8 @@ export default function HelpPage() {
           </li>
           <li>
             <strong>Bulk add:</strong> <em>Import</em> → write{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">
-              word ; meaning ; example
-            </code>{" "}
-            on each line, or paste from Excel → <em>Preview</em> → <em>Add</em>.
+            <code className="bg-ink/10 rounded px-1">word ; meaning ; example</code> on each line,
+            or paste from Excel → <em>Preview</em> → <em>Add</em>.
           </li>
           <li>
             Tap a word in the list to edit it; you can add an example sentence, a note and tags.
@@ -75,9 +73,9 @@ export default function HelpPage() {
           <em>Start studying</em>, look at the word, say the meaning in your head, flip the card and
           tell the app how well you remembered:
         </p>
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <div className="brutal-card overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-100 dark:bg-zinc-900">
+            <thead className="bg-yellow text-on-accent">
               <tr>
                 <th className="p-2">Answer</th>
                 <th className="p-2">When</th>
@@ -91,7 +89,7 @@ export default function HelpPage() {
                 ["Good", "I remembered", "Swipe right · key 3"],
                 ["Easy", "I knew it instantly", "Key 4"],
               ].map(([answer, when, key]) => (
-                <tr key={answer} className="border-t border-zinc-200 dark:border-zinc-800">
+                <tr key={answer} className="border-ink border-t-[2.5px]">
                   <td className="p-2 font-medium">{answer}</td>
                   <td className="p-2">{when}</td>
                   <td className="p-2">{key}</td>
@@ -110,13 +108,13 @@ export default function HelpPage() {
             left = Again (works with a mouse too). On a keyboard, 1–4 gives all four answers.
           </li>
           <li>
-            <strong>🔊 Listen</strong> reads the word aloud. <strong>↶ Undo</strong> (Z on a
-            keyboard) takes back your last answer.
+            <strong>Listen</strong> reads the word aloud. <strong>Undo</strong> (Z on a keyboard)
+            takes back your last answer.
           </li>
           <li>By default you get 10 new cards a day plus the reviews that are due.</li>
           <li>
-            A new day starts at 4:00 AM. Study at least one card every day to grow your streak (🔥);
-            skip a day and it resets.
+            A new day starts at 4:00 AM. Study at least one card every day to grow your streak (the
+            flame); skip a day and it resets.
           </li>
         </ul>
       </Section>
@@ -131,6 +129,10 @@ export default function HelpPage() {
           <li>
             <strong>Settings:</strong> display name, time zone, new cards per day, daily goal,
             password, theme.
+          </li>
+          <li>
+            <strong>On a phone:</strong> tap a tab in the bottom menu, or press and hold the menu
+            and slide your finger to the tab you want, then let go.
           </li>
         </ul>
       </Section>
@@ -154,8 +156,8 @@ export default function HelpPage() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2 text-zinc-800 dark:text-zinc-200">
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <section className="text-ink flex flex-col gap-2">
+      <h2 className="text-xl font-bold">{title}</h2>
       {children}
     </section>
   );

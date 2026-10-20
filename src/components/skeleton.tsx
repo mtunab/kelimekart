@@ -1,9 +1,9 @@
-/** Yüklenirken içerik yerine gösterilen gri, yumuşak yanıp sönen kutu. */
+/** Yüklenirken içerik yerine gösterilen, yumuşak yanıp sönen kenarlı kutu. */
 export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`animate-pulse rounded-2xl bg-zinc-200/80 motion-reduce:animate-none dark:bg-zinc-800/80 ${className}`}
+      className={`border-ink/20 bg-ink/10 animate-pulse rounded-2xl border-[2.5px] motion-reduce:animate-none ${className}`}
     />
   );
 }

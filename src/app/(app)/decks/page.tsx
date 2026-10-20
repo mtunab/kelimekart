@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { buttonClass } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { listDeckSummaries, type DeckSummary } from "@/lib/decks";
+import { deckBadge } from "@/lib/deck-badge";
 import { languageLabel } from "@/lib/languages";
 
 export const metadata: Metadata = { title: "Decks · KelimeKart" };
@@ -26,12 +27,12 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
   return (
     <PageShell>
       {notice ? <Alert tone="success">{notice}</Alert> : null}
-      <h1 className="text-2xl font-semibold tracking-tight">Decks</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Decks</h1>
 
       <section aria-label="Your decks" className="flex flex-col gap-3">
         {active.length === 0 ? (
           <FadeIn>
-            <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+            <p className="border-ink text-ink-soft rounded-xl border-[2.5px] border-dashed p-6 text-center font-medium">
               No decks yet. Create your first deck below, then start adding words.
             </p>
           </FadeIn>
@@ -45,8 +46,8 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
       </section>
 
       <FadeIn as="section" index={active.length + 1}>
-        <div className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 id="new-deck" className="mb-3 text-lg font-semibold">
+        <div className="brutal-card p-4">
+          <h2 id="new-deck" className="mb-3 text-xl font-bold">
             New deck
           </h2>
           <DeckForm />
@@ -56,9 +57,9 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
       <section aria-label="Archive">
         {showArchived ? (
           <>
-            <h2 className="mb-2 text-lg font-semibold">Archived decks</h2>
+            <h2 className="mb-2 text-xl font-bold">Archived decks</h2>
             {archived.length === 0 ? (
-              <p className="text-zinc-600 dark:text-zinc-400">No archived decks.</p>
+              <p className="text-ink-soft">No archived decks.</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {archived.map((deck, i) => (
@@ -81,18 +82,25 @@ export default async function DecksPage({ searchParams }: PageProps<"/decks">) {
 }
 
 function DeckRow({ deck, index }: { deck: DeckSummary; index: number }) {
+  const badge = deckBadge(deck.name, index);
   return (
     <FadeIn
       as="li"
       index={index}
-      className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+      className="brutal-box shadow-hard-sm flex items-center justify-between gap-3 p-3"
     >
+      <span
+        aria-hidden="true"
+        className={`border-ink text-on-accent flex size-11 shrink-0 items-center justify-center rounded-lg border-[2.5px] font-bold ${badge.color}`}
+      >
+        {badge.initials}
+      </span>
       <Link
         href={`/decks/${deck.id}`}
-        className="flex min-h-11 min-w-0 flex-1 flex-col justify-center rounded-lg px-1"
+        className="flex min-h-11 min-w-0 flex-1 flex-col justify-center rounded-lg px-1 underline-offset-4 hover:underline"
       >
-        <span className="truncate font-medium">{deck.name}</span>
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="truncate font-bold">{deck.name}</span>
+        <span className="text-ink-soft text-sm">
           {languageLabel(deck.source_lang)} → {languageLabel(deck.target_lang)} · {deck.card_count}{" "}
           {deck.card_count === 1 ? "card" : "cards"}
           {deck.role === "member" ? " · shared" : ""}
@@ -101,12 +109,12 @@ function DeckRow({ deck, index }: { deck: DeckSummary; index: number }) {
       {!deck.archived && deck.card_count > 0 ? (
         <div className="flex shrink-0 items-center gap-2 text-sm">
           {deck.due_count > 0 ? (
-            <span className="rounded-full bg-indigo-100 px-2 py-1 font-medium text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">
+            <span className="border-ink bg-blue text-on-accent rounded-full border-2 px-2 py-0.5 font-bold">
               {deck.due_count} due
             </span>
           ) : null}
           {deck.new_count > 0 ? (
-            <span className="rounded-full bg-green-100 px-2 py-1 font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
+            <span className="border-ink bg-teal text-on-accent rounded-full border-2 px-2 py-0.5 font-bold">
               {deck.new_count} new
             </span>
           ) : null}

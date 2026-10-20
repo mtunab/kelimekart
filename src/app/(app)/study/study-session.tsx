@@ -11,17 +11,9 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ProgressBar } from "@/components/motion/progress-bar";
+import { FlameIcon, SpeakerIcon, UndoIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui/button";
-import {
-  formatInterval,
-  fromFsrsCard,
-  GRADES,
-  previewDueDates,
-  review,
-  toFsrsCard,
-  type Grade,
-  type ProgressFields,
-} from "@/lib/srs";
+import type { Grade, ProgressFields } from "@/lib/srs";
 import { sessionSummary, submitReview, undoReview } from "./actions";
 import { canSpeak, speak } from "./speech";
 
@@ -78,6 +70,17 @@ const cardVariants: Variants = {
   }),
 };
 
+type Srs = typeof import("@/lib/srs");
+let srsModule: Promise<Srs> | null = null;
+
+/**
+ * Tekrar hesabı (ts-fsrs) ilk yükte inmez: sayfa açılınca arka planda yüklenir, kart
+ * çevrilene kadar hazır olur. Böylece çalışma ekranı daha hızlı açılır.
+ */
+function loadSrs() {
+  return (srsModule ??= import("@/lib/srs"));
+}
+
 /** Ağ hatasında aynı olay kimliğiyle yeniden dener (sunucu tarafı idempotent). */
 async function submitWithRetry(input: { cardId: string; rating: Grade; clientEventId: string }) {
   let last: Awaited<ReturnType<typeof submitReview>> = {
@@ -120,6 +123,11 @@ export function StudySession({
   // Sunucuda false, tarayıcıda gerçek değer (hidrasyon uyumsuzluğu olmadan).
   const speechAvailable = useSyncExternalStore(noopSubscribe, canSpeak, () => false);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const [srs, setSrs] = useState<Srs | null>(null);
+  const srsRef = useRef<Srs | null>(null);
+  // Hesap modülü gelmeden verilen cevap kaybolmasın: modül gelince işlenir.
+  const queuedRating = useRef<Grade | null>(null);
+  const answerRef = useRef<(rating: Grade) => void>(() => undefined);
 
   const current = queue[0];
   const answered = history.filter((h) => h.status !== "undone" && h.status !== "failed");
@@ -131,14 +139,13 @@ export function StudySession({
   const finished = !current;
 
   const previews = useMemo(() => {
-    if (!current || !flipped) return null;
+    if (!srs || !current || !flipped) return null;
     const now = new Date();
-    const dues = previewDueDates(toFsrsCard(current.progress, now), now);
-    return Object.fromEntries(GRADES.map((g) => [g, formatInterval(now, dues[g])])) as Record<
-      Grade,
-      string
-    >;
-  }, [current, flipped]);
+    const dues = srs.previewDueDates(srs.toFsrsCard(current.progress, now), now);
+    return Object.fromEntries(
+      srs.GRADES.map((g) => [g, srs.formatInterval(now, dues[g])]),
+    ) as Record<Grade, string>;
+  }, [srs, current, flipped]);
 
   const pushEntry = useCallback((entry: HistoryEntry) => {
     historyRef.current = [...historyRef.current, entry];
@@ -156,11 +163,16 @@ export function StudySession({
   const answer = useCallback(
     (rating: Grade) => {
       if (!current || !flipped) return;
+      const lib = srsRef.current;
+      if (!lib) {
+        queuedRating.current = rating;
+        return;
+      }
       const item = current;
       const now = new Date();
-      const next = review(toFsrsCard(item.progress, now), rating, now);
+      const next = lib.review(lib.toFsrsCard(item.progress, now), rating, now);
       const requeue = next.due.getTime() - now.getTime() <= LEARN_AHEAD_MS;
-      const optimistic: QueueItem = { ...item, isNew: false, progress: fromFsrsCard(next) };
+      const optimistic: QueueItem = { ...item, isNew: false, progress: lib.fromFsrsCard(next) };
 
       setExitDir(EXIT_BY_GRADE[rating]);
       setQueue((q) => (requeue ? [...q.slice(1), optimistic] : q.slice(1)));
@@ -200,6 +212,25 @@ export function StudySession({
     },
     [current, flipped, pushEntry, updateEntry],
   );
+
+  useEffect(() => {
+    answerRef.current = answer;
+  }, [answer]);
+
+  useEffect(() => {
+    let alive = true;
+    void loadSrs().then((lib) => {
+      if (!alive) return;
+      srsRef.current = lib;
+      setSrs(lib);
+      const queued = queuedRating.current;
+      queuedRating.current = null;
+      if (queued) answerRef.current(queued);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const undo = useCallback(() => {
     const index = historyRef.current.findLastIndex(
@@ -270,14 +301,18 @@ export function StudySession({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <div className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="flex items-center justify-between text-sm font-bold">
           <span>
             Daily goal: {doneToday} / {dailyGoal}
           </span>
           {!finished ? (
-            <span>
-              <span className="text-indigo-700 dark:text-indigo-300">{reviewLeft} due</span> ·{" "}
-              <span className="text-green-700 dark:text-green-300">{newLeft} new</span>
+            <span className="flex gap-1.5">
+              <span className="border-ink bg-blue text-on-accent rounded-full border-2 px-2">
+                {reviewLeft} due
+              </span>
+              <span className="border-ink bg-teal text-on-accent rounded-full border-2 px-2">
+                {newLeft} new
+              </span>
             </span>
           ) : null}
         </div>
@@ -292,7 +327,7 @@ export function StudySession({
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-amber-700 dark:text-amber-300"
+              className="border-ink bg-yellow text-on-accent inline-block rounded-lg border-2 px-2 py-0.5 font-bold"
             >
               {notice}
             </m.p>
@@ -302,7 +337,12 @@ export function StudySession({
 
       {current ? (
         <>
-          <div className="relative">
+          <div className="relative my-2">
+            {/* Arkada eğik duran ikinci kart: destenin devam ettiğini hissettirir. */}
+            <div
+              aria-hidden="true"
+              className="border-ink bg-blue absolute inset-0 -rotate-3 rounded-3xl border-[3px]"
+            />
             <AnimatePresence mode="popLayout" custom={exitDir} initial={false}>
               <FlipCard
                 key={`${current.cardId}-${turn}`}
@@ -323,16 +363,18 @@ export function StudySession({
                 onClick={() => speak(current.front, current.sourceLang)}
                 aria-label={`Listen to "${current.front}"`}
               >
-                🔊 Listen
+                <SpeakerIcon size={18} />
+                Listen
               </button>
             ) : null}
             <button
               type="button"
-              className={buttonClass("ghost", "text-sm")}
+              className={buttonClass("secondary", "text-sm")}
               onClick={undo}
               disabled={!lastUndoable}
             >
-              ↶ Undo
+              <UndoIcon size={18} />
+              Undo
             </button>
           </div>
 
@@ -341,41 +383,40 @@ export function StudySession({
               // Puan düğmeleri yok (Tuna'nın isteği): telefonda kaydır, klavyede 1-4.
               <m.p
                 key="swipe-hint"
-                className="flex min-h-14 items-center justify-between rounded-2xl border border-dashed border-zinc-300 px-4 text-sm font-medium dark:border-zinc-700"
+                className="border-ink flex min-h-14 items-center justify-between rounded-xl border-[2.5px] border-dashed px-4 text-sm font-bold"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
               >
-                <span className="text-red-700 dark:text-red-300">← Again · {previews?.[1]}</span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">swipe</span>
-                <span className="text-green-700 dark:text-green-300">Good · {previews?.[3]} →</span>
+                <span>← Again · {previews?.[1]}</span>
+                <span className="text-ink-soft text-xs font-medium">swipe</span>
+                <span>Good · {previews?.[3]} →</span>
               </m.p>
             ) : (
               <m.button
                 key="show"
                 type="button"
-                className={buttonClass("primary", "min-h-14 w-full")}
+                className={buttonClass("primary", "min-h-14 w-full text-lg")}
                 onClick={() => setFlipped(true)}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                whileTap={{ scale: 0.97 }}
               >
                 Show answer
               </m.button>
             )}
           </AnimatePresence>
-          <p className="hidden text-center text-xs text-zinc-500 sm:block dark:text-zinc-400">
+          <p className="text-ink-soft hidden text-center text-xs sm:block">
             Keys: Space = flip · 1 Again · 2 Hard · 3 Good · 4 Easy · Z = undo
           </p>
-          <p className="text-center text-xs text-zinc-500 sm:hidden dark:text-zinc-400">
+          <p className="text-ink-soft text-center text-xs sm:hidden">
             Tap to flip, then swipe right = Good, left = Again
           </p>
         </>
       ) : (
         <m.section
           aria-labelledby="summary"
-          className="flex flex-col items-center gap-4 rounded-3xl border border-zinc-200 p-6 text-center dark:border-zinc-800"
+          className="brutal-card flex flex-col items-center gap-4 p-6 text-center"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 22 }}
@@ -390,7 +431,7 @@ export function StudySession({
               🎉
             </m.p>
           ) : null}
-          <h1 id="summary" className="text-2xl font-semibold">
+          <h1 id="summary" className="text-3xl font-bold tracking-tight">
             {answered.length ? "Session complete!" : "Nothing to study right now"}
           </h1>
           {answered.length ? (
@@ -408,27 +449,27 @@ export function StudySession({
               />
             </dl>
           ) : (
-            <p className="text-zinc-600 dark:text-zinc-400">
+            <p className="text-ink-soft">
               No cards are due, and today&apos;s new-card limit is reached or there are no new
               words.
             </p>
           )}
           {summary && summary.streak > 0 ? (
             <m.p
-              className="text-zinc-700 dark:text-zinc-300"
+              className="border-ink bg-yellow text-on-accent shadow-hard-sm flex items-center gap-1.5 rounded-full border-[2.5px] px-3 py-1 font-bold"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              🔥 {summary.streak}-day streak
+              <FlameIcon size={18} />
+              {summary.streak}-day streak
             </m.p>
           ) : null}
-          {pendingCount > 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Saving your answers…</p>
-          ) : null}
+          {pendingCount > 0 ? <p className="text-ink-soft text-sm">Saving your answers…</p> : null}
           <div className="flex flex-wrap justify-center gap-2">
             {lastUndoable ? (
               <button type="button" className={buttonClass("secondary")} onClick={undo}>
-                ↶ Undo last answer
+                <UndoIcon size={18} />
+                Undo last answer
               </button>
             ) : null}
             <Link href={backHref} className={buttonClass("primary")}>
@@ -494,14 +535,14 @@ function FlipCard({
       <m.span
         aria-hidden="true"
         style={{ opacity: againOpacity }}
-        className="pointer-events-none absolute top-4 right-4 z-10 rotate-12 rounded-lg border-2 border-red-600 px-2 py-0.5 text-sm font-bold text-red-600"
+        className="border-ink bg-red text-on-accent shadow-hard-sm pointer-events-none absolute top-4 right-4 z-10 rotate-12 rounded-lg border-[2.5px] px-2 py-0.5 text-sm font-bold"
       >
         AGAIN{intervals ? <span className="ml-1 font-medium">{intervals[1]}</span> : null}
       </m.span>
       <m.span
         aria-hidden="true"
         style={{ opacity: goodOpacity }}
-        className="pointer-events-none absolute top-4 left-4 z-10 -rotate-12 rounded-lg border-2 border-green-600 px-2 py-0.5 text-sm font-bold text-green-600"
+        className="border-ink bg-teal text-on-accent shadow-hard-sm pointer-events-none absolute top-4 left-4 z-10 -rotate-12 rounded-lg border-[2.5px] px-2 py-0.5 text-sm font-bold"
       >
         GOOD{intervals ? <span className="ml-1 font-medium">{intervals[3]}</span> : null}
       </m.span>
@@ -514,34 +555,32 @@ function FlipCard({
       >
         <Face hidden={flipped}>
           {item.isNew ? (
-            <span className="absolute top-3 left-3 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-950 dark:text-green-200">
+            <span className="border-ink bg-teal text-on-accent absolute top-3 left-3 rounded-full border-2 px-2 py-0.5 text-xs font-bold">
               new
             </span>
           ) : null}
-          <p lang={item.sourceLang} className="text-3xl font-semibold break-words">
+          <p lang={item.sourceLang} className="text-4xl font-bold tracking-tight break-words">
             {item.front}
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Tap to reveal</p>
+          <p className="text-ink-soft text-sm font-medium">Tap to reveal</p>
         </Face>
         <Face back hidden={!flipped}>
-          <p
-            lang={item.sourceLang}
-            className="text-lg font-medium text-zinc-500 dark:text-zinc-400"
-          >
+          <p lang={item.sourceLang} className="text-ink-soft text-lg font-medium">
             {item.front}
           </p>
-          <hr className="w-16 border-zinc-200 dark:border-zinc-700" />
-          <p lang={item.targetLang} className="text-2xl font-semibold break-words">
+          <hr className="border-ink w-16 border-t-[2.5px]" />
+          <p lang={item.targetLang} className="text-3xl font-bold tracking-tight break-words">
             {item.back}
           </p>
           {item.example ? (
-            <p lang={item.sourceLang} className="text-base text-zinc-600 italic dark:text-zinc-400">
+            <p
+              lang={item.sourceLang}
+              className="border-ink rounded-xl border-[2.5px] border-dashed px-3 py-2 text-base font-medium"
+            >
               {item.example}
             </p>
           ) : null}
-          {item.note ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{item.note}</p>
-          ) : null}
+          {item.note ? <p className="text-ink-soft text-sm">{item.note}</p> : null}
         </Face>
       </m.div>
     </m.div>
@@ -561,7 +600,7 @@ function Face({
   return (
     <div
       aria-hidden={hidden || undefined}
-      className="relative col-start-1 row-start-1 flex min-h-72 flex-col items-center justify-center gap-3 rounded-3xl border border-zinc-200 bg-white p-6 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="border-ink bg-surface shadow-hard-lg relative col-start-1 row-start-1 flex min-h-80 flex-col items-center justify-center gap-3 rounded-3xl border-[3px] p-6 text-center"
       style={{
         backfaceVisibility: "hidden",
         WebkitBackfaceVisibility: "hidden",
@@ -580,13 +619,13 @@ function noopSubscribe() {
 function Stat({ label, value, index }: { label: string; value: string; index: number }) {
   return (
     <m.div
-      className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-900"
+      className="brutal-box p-3"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 + index * 0.08 }}
     >
-      <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className="text-2xl font-semibold">{value}</dd>
+      <dt className="text-ink-soft text-sm">{label}</dt>
+      <dd className="text-2xl font-bold">{value}</dd>
     </m.div>
   );
 }

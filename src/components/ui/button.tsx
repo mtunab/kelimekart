@@ -3,19 +3,16 @@ import type { ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
-  primary:
-    "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-400 dark:bg-indigo-500 dark:hover:bg-indigo-400",
-  secondary:
-    "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800",
-  ghost: "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
-  danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400",
+  primary: "border-[2.5px] border-ink bg-yellow text-on-accent press-sm",
+  secondary: "border-[2.5px] border-ink bg-surface text-ink press-sm",
+  ghost: "text-ink underline-offset-4 hover:bg-ink/10 hover:underline",
+  danger: "border-[2.5px] border-ink bg-red text-on-accent press-sm",
 };
 
 export function buttonClass(variant: Variant = "primary", extra = "") {
   return [
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-base font-medium transition-colors",
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500",
-    "disabled:cursor-not-allowed",
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-base font-bold",
+    "disabled:cursor-not-allowed disabled:opacity-60",
     variants[variant],
     extra,
   ].join(" ");

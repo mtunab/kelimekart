@@ -30,22 +30,22 @@ export default async function MembersPage({ params }: PageProps<"/decks/[deckId]
     <PageShell>
       <Link
         href={`/decks/${deck.id}`}
-        className="self-start rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+        className="self-start rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         ← {deck.name}
       </Link>
-      <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <h1 className="text-4xl font-bold tracking-tight">Members</h1>
+      <p className="text-ink-soft text-sm">
         Members can see this deck and add words. Everyone&apos;s study progress is their own.
       </p>
 
-      <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+      <ul className="brutal-card divide-ink divide-y-[2.5px] overflow-hidden">
         {members.map((m) => (
           <li key={m.user_id} className="flex min-h-14 items-center justify-between gap-2 p-3">
             <span>
               {m.name}
               {m.user_id === user.id ? " (you)" : ""}
-              <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="text-ink-soft ml-2 text-sm">
                 {m.role === "owner" ? "owner" : "member"}
               </span>
             </span>
@@ -63,12 +63,12 @@ export default async function MembersPage({ params }: PageProps<"/decks/[deckId]
       </ul>
 
       {isOwner ? (
-        <section className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-3 text-lg font-semibold">Add member</h2>
+        <section className="brutal-card p-4">
+          <h2 className="mb-3 text-xl font-bold">Add member</h2>
           {candidates.length ? (
             <AddMemberForm deckId={deck.id} candidates={candidates} />
           ) : (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-ink-soft text-sm">
               Everyone in the group is already a member of this deck.
             </p>
           )}

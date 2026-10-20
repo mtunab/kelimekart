@@ -72,10 +72,7 @@ export function QuickAdd({
     <form onSubmit={submit} className="flex flex-col gap-2" aria-label="Quick add word">
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
         <div className="flex flex-col gap-1">
-          <label
-            htmlFor="qa-front"
-            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
+          <label htmlFor="qa-front" className="text-sm font-bold">
             Word
           </label>
           <input
@@ -97,7 +94,7 @@ export function QuickAdd({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="qa-back" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label htmlFor="qa-back" className="text-sm font-bold">
             Meaning
           </label>
           <input
@@ -125,10 +122,10 @@ export function QuickAdd({
         aria-busy={inFlight > 0}
         className={`min-h-5 text-sm ${
           status?.tone === "error"
-            ? "text-red-700 dark:text-red-300"
+            ? "text-ink decoration-red font-bold underline decoration-[3px] underline-offset-4"
             : status?.tone === "info"
-              ? "text-zinc-500 dark:text-zinc-400"
-              : "text-green-700 dark:text-green-300"
+              ? "text-ink-soft"
+              : "text-ink font-bold"
         }`}
       >
         {status?.text ?? ""}

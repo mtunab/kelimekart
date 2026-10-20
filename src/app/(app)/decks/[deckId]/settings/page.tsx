@@ -18,16 +18,16 @@ export default async function DeckSettingsPage({ params }: PageProps<"/decks/[de
     <PageShell>
       <Link
         href={`/decks/${deck.id}`}
-        className="self-start rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+        className="self-start rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         ← {deck.name}
       </Link>
-      <h1 className="text-2xl font-semibold tracking-tight">Deck settings</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Deck settings</h1>
       <DeckForm deck={deck} />
-      <form action={setDeckArchived} className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <form action={setDeckArchived} className="border-ink border-t-[2.5px] pt-4">
         <input type="hidden" name="deckId" value={deck.id} />
         <input type="hidden" name="archived" value={String(!deck.archived)} />
-        <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-ink-soft mb-2 text-sm">
           {deck.archived
             ? "This deck is archived. Restore it to show it in your list and study queue again."
             : "Archiving doesn't delete the deck; it just hides it from your list and study queue."}

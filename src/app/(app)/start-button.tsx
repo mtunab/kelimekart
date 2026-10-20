@@ -2,28 +2,28 @@
 
 import { m } from "motion/react";
 import Link from "next/link";
+import { ArrowRightIcon } from "@/components/icons";
 
-const MotionLink = m.create(Link);
-
-/** Büyük "Start studying" düğmesi: hafif nefes alma, üstüne gelince/dokununca tepki. */
+/** Büyük sarı "Start studying" düğmesi: basınca gölgesine gömülür, ok hafifçe ileri itilir. */
 export function StartButton({ href, count }: { href: string; count: number }) {
   return (
-    <MotionLink
+    <Link
       href={href}
-      className="relative flex min-h-16 w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-indigo-600 px-6 text-lg font-semibold text-white shadow-lg shadow-indigo-600/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:bg-indigo-500"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      animate={{
-        boxShadow: [
-          "0 10px 24px -8px rgb(79 70 229 / 0.35)",
-          "0 14px 32px -6px rgb(79 70 229 / 0.55)",
-          "0 10px 24px -8px rgb(79 70 229 / 0.35)",
-        ],
-      }}
-      transition={{ boxShadow: { duration: 2.4, repeat: Infinity, ease: "easeInOut" } }}
+      className="press border-ink bg-yellow text-on-accent flex min-h-16 w-full items-center justify-between gap-2 rounded-xl border-[3px] px-5 text-xl font-bold"
     >
-      Start studying
-      <span className="rounded-full bg-white/20 px-2 py-0.5 text-sm font-medium">{count}</span>
-    </MotionLink>
+      <span className="flex items-center gap-3">
+        Start studying
+        <span className="border-ink bg-surface text-ink rounded-full border-2 px-2.5 py-0.5 text-base">
+          {count}
+        </span>
+      </span>
+      <m.span
+        className="flex"
+        animate={{ x: [0, 5, 0] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <ArrowRightIcon size={26} strokeWidth={2.8} />
+      </m.span>
+    </Link>
   );
 }

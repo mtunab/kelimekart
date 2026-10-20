@@ -118,10 +118,7 @@ export function ImportForm({ deckId }: { deckId: string }) {
       ) : null}
 
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="import-text"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
+        <label htmlFor="import-text" className="text-sm font-bold">
           Words
         </label>
         <textarea
@@ -154,10 +151,10 @@ export function ImportForm({ deckId }: { deckId: string }) {
 
       {preview ? (
         <section aria-labelledby="preview" className="flex flex-col gap-3">
-          <h2 id="preview" className="text-lg font-semibold">
+          <h2 id="preview" className="text-xl font-bold">
             Preview
           </h2>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-ink text-sm">
             <strong>{toImport.length}</strong> new {toImport.length === 1 ? "card" : "cards"} will
             be added.
             {preview.cards.length - toImport.length > 0
@@ -167,7 +164,7 @@ export function ImportForm({ deckId }: { deckId: string }) {
           </p>
 
           {preview.errors.length ? (
-            <ul className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+            <ul className="border-ink bg-red text-on-accent rounded-xl border-[2.5px] p-3 text-sm font-medium">
               {preview.errors.slice(0, 20).map((e) => (
                 <li key={e.line}>
                   Line {e.line}: {e.message}
@@ -177,9 +174,9 @@ export function ImportForm({ deckId }: { deckId: string }) {
             </ul>
           ) : null}
 
-          <div className="max-h-96 overflow-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <div className="brutal-card max-h-96 overflow-auto">
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-zinc-100 dark:bg-zinc-900">
+              <thead className="bg-yellow text-on-accent sticky top-0">
                 <tr>
                   <th className="p-2">Word</th>
                   <th className="p-2">Meaning</th>
@@ -195,13 +192,15 @@ export function ImportForm({ deckId }: { deckId: string }) {
                       ? "Already in deck"
                       : "New";
                   return (
-                    <tr key={card.line} className="border-t border-zinc-200 dark:border-zinc-800">
+                    <tr key={card.line} className="border-ink border-t-[2.5px]">
                       <td className="p-2">{card.front}</td>
                       <td className="p-2">{card.back}</td>
-                      <td
-                        className={`p-2 ${status === "New" ? "text-green-700 dark:text-green-300" : "text-amber-700 dark:text-amber-300"}`}
-                      >
-                        {status}
+                      <td className="p-2">
+                        <span
+                          className={`border-ink text-on-accent rounded-full border-2 px-2 py-0.5 text-xs font-bold ${status === "New" ? "bg-teal" : "bg-yellow"}`}
+                        >
+                          {status}
+                        </span>
                       </td>
                     </tr>
                   );
@@ -209,9 +208,7 @@ export function ImportForm({ deckId }: { deckId: string }) {
               </tbody>
             </table>
             {preview.cards.length > 300 ? (
-              <p className="p-2 text-sm text-zinc-500 dark:text-zinc-400">
-                Showing the first 300 lines.
-              </p>
+              <p className="text-ink-soft p-2 text-sm">Showing the first 300 lines.</p>
             ) : null}
           </div>
 

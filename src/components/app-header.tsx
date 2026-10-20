@@ -1,22 +1,24 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
+import { LogOutIcon } from "@/components/icons";
 import { BottomNav, TopNav } from "@/components/nav-links";
 import { buttonClass } from "@/components/ui/button";
 
 export function AppHeader() {
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <header className="border-ink bg-paper sticky top-0 z-20 border-b-[3px]">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 py-2">
           <Link
             href="/"
-            className="rounded-md px-1 py-2 text-lg font-semibold tracking-tight text-indigo-700 dark:text-indigo-300"
+            className="bg-ink text-paper rounded-lg px-2.5 py-1 text-lg font-bold tracking-tight"
           >
             KelimeKart
           </Link>
           <TopNav />
           <form action={signOut}>
-            <button type="submit" className={buttonClass("ghost", "text-sm")}>
+            <button type="submit" className={buttonClass("ghost", "px-3 text-sm")}>
+              <LogOutIcon size={18} />
               Log out
             </button>
           </form>

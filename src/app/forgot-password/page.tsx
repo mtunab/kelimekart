@@ -8,12 +8,12 @@ export const metadata: Metadata = { title: "Forgot password · KelimeKart" };
 export default function ForgotPasswordPage() {
   return (
     <AuthCard title="Forgot password">
-      <div className="flex flex-col gap-3 text-center text-zinc-700 dark:text-zinc-300">
+      <div className="text-ink flex flex-col gap-3 text-center">
         <p>
           In KelimeKart, the group admin creates accounts and resets passwords. Let the admin (Tuna)
           know and they&apos;ll give you a new password.
         </p>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-ink-soft text-sm">
           After logging in with the new password, you can pick your own under{" "}
           <strong>Settings → Change password</strong>.
         </p>

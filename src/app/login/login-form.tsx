@@ -35,7 +35,7 @@ export function LoginForm({ next }: { next: string }) {
       <SubmitButton pendingText="Logging in…">Log in</SubmitButton>
       <Link
         href="/forgot-password"
-        className="self-center rounded-md px-2 py-2 text-sm text-indigo-700 underline-offset-4 hover:underline dark:text-indigo-300"
+        className="self-center rounded-md px-2 py-2 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         Forgot password?
       </Link>

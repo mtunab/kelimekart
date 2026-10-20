@@ -61,9 +61,7 @@ export function ProfileForm({
           defaultValue={v?.daily_goal_reviews ?? String(profile.daily_goal_reviews)}
         />
       </div>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        A new day starts at 4:00 AM in your time zone.
-      </p>
+      <p className="text-ink-soft text-sm">A new day starts at 4:00 AM in your time zone.</p>
       <SubmitButton pendingText="Saving…">Save</SubmitButton>
     </form>
   );

@@ -27,6 +27,7 @@
     "user": "tsx scripts/user.ts"
   },
   "dependencies": {
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "motion": "^14.4.0",

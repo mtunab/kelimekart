@@ -2,7 +2,7 @@
 
 import { m } from "motion/react";
 
-/** Dolarken kayarak büyüyen ilerleme çubuğu. */
+/** Dolarken kayarak büyüyen, kalın kenarlı ilerleme çubuğu. Hedefe ulaşınca pembeye döner. */
 export function ProgressBar({
   value,
   max,
@@ -22,10 +22,10 @@ export function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuenow={Math.min(value, max)}
-      className={`h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800 ${className}`}
+      className={`border-ink bg-surface h-4 overflow-hidden rounded-full border-[2.5px] ${className}`}
     >
       <m.div
-        className={`h-full rounded-full ${percent >= 100 ? "bg-green-500" : "bg-indigo-600 dark:bg-indigo-500"}`}
+        className={`h-full ${percent > 0 && percent < 100 ? "border-ink border-r-[2.5px]" : ""} ${percent >= 100 ? "bg-pink" : "bg-teal"}`}
         initial={{ width: 0 }}
         animate={{ width: `${percent}%` }}
         transition={{ type: "spring", stiffness: 120, damping: 22 }}

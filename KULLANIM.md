@@ -36,15 +36,16 @@ in your head, then flip the card and tell the app how well you remembered:
 - Under the card you'll see when it comes back for each answer ("10m", "3d"…). Be honest; the app handles the rest.
 - **Flip:** tap the card or press **Space**. Then drag the card **right = Good**, **left = Again** (a mouse works too).
   On a keyboard, **1–4** gives all four answers.
-- **🔊 Listen** reads the word aloud. **↶ Undo** (**Z** on a keyboard) takes back your last answer.
+- **Listen** reads the word aloud. **Undo** (**Z** on a keyboard) takes back your last answer.
 - By default you get **10 new cards** a day plus the reviews that are due. At the end you see a summary: cards, accuracy, tomorrow's load.
-- A new day starts at **4:00 AM**. Study at least one card every day to grow your **streak (🔥)**; skip a day and it resets.
+- A new day starts at **4:00 AM**. Study at least one card every day to grow your **streak** (the flame); skip a day and it resets.
 
 ## 4. Stats and settings
 
 - **Stats:** today and the last 7 days, accuracy, streak, a 14-day forecast, and new / learning / mature cards per deck.
   **Group board:** shows only each person's name, today's review count and streak (nobody sees which words you missed).
 - **Settings:** display name, time zone, new cards per day, daily goal, change password, theme (light / dark / system).
+- **On a phone:** tap a tab in the bottom menu, or press and hold the menu and slide your finger to the tab you want, then let go.
 
 ## 5. Troubleshooting
 

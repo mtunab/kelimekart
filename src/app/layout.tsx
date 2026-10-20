@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { parseTheme, SYSTEM_THEME_SCRIPT, THEME_COOKIE } from "@/lib/theme";
+import "@fontsource-variable/space-grotesk";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,8 +25,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#fff8e7" },
+    { media: "(prefers-color-scheme: dark)", color: "#141210" },
   ],
 };
 

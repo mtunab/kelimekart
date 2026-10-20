@@ -9,8 +9,8 @@ export function PageShell({
   width?: string;
 }) {
   return (
-    // Altta mobil menü için boşluk (pb-24).
-    <main className={`mx-auto flex w-full ${width} flex-1 flex-col gap-6 px-4 pt-6 pb-24 sm:pb-6`}>
+    // Altta mobil menü için boşluk (pb-32).
+    <main className={`mx-auto flex w-full ${width} flex-1 flex-col gap-6 px-4 pt-6 pb-32 sm:pb-8`}>
       {children}
     </main>
   );

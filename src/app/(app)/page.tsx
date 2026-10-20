@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { FlameIcon } from "@/components/icons";
 import { FadeIn } from "@/components/motion/fade-in";
 import { ProgressBar } from "@/components/motion/progress-bar";
 import { PageShell } from "@/components/page-shell";
 import { buttonClass } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { currentStreak } from "@/lib/dates";
+import { deckBadge } from "@/lib/deck-badge";
 import { listDeckSummaries } from "@/lib/decks";
 import { languageLabel } from "@/lib/languages";
 import { StartButton } from "./start-button";
@@ -48,54 +50,65 @@ export default async function StudyHome() {
 
   return (
     <PageShell width="max-w-xl">
-      <FadeIn>
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Today</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Hi, {profile.display_name} 👋</h1>
+      <FadeIn className="flex items-start justify-between gap-3">
+        <h1 className="text-5xl leading-[0.95] font-bold tracking-tighter">
+          Hi, {profile.display_name}.
+          <br />
+          {ready > 0 ? "Let’s go." : decks.length === 0 ? "Welcome!" : "Nice work."}
+        </h1>
+        <span
+          className="border-ink bg-yellow text-on-accent shadow-hard-sm mt-1 flex shrink-0 items-center gap-1 rounded-full border-[2.5px] px-3 py-1 font-bold"
+          aria-label={`${streak}-day streak`}
+        >
+          <FlameIcon size={18} />
+          {streak}
+        </span>
       </FadeIn>
 
       <FadeIn index={1}>
         <section
           aria-label="Today"
-          className="flex flex-col gap-5 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className={`brutal-card text-on-accent flex flex-col gap-4 p-4 ${
+            decks.length === 0 ? "bg-blue" : ready > 0 ? "bg-pink" : "bg-teal"
+          }`}
         >
           {decks.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <p className="text-4xl" aria-hidden="true">
-                🗂️
+            <div className="flex flex-col items-start gap-3 py-2">
+              <p className="text-2xl font-bold tracking-tight">
+                Create your first deck to start studying.
               </p>
-              <p className="text-lg font-medium">Create your first deck to start studying.</p>
-              <Link href="/decks" className={buttonClass("primary")}>
+              <Link
+                href="/decks"
+                className="press-sm border-ink bg-yellow inline-flex min-h-11 items-center rounded-xl border-[2.5px] px-4 font-bold"
+              >
                 Go to Decks
               </Link>
             </div>
           ) : ready > 0 ? (
             <>
-              <dl className="grid grid-cols-3 gap-2 text-center">
-                <Stat label="Due" value={dueTotal} tone="text-indigo-700 dark:text-indigo-300" />
-                <Stat label="New" value={newTotal} tone="text-green-700 dark:text-green-300" />
-                <Stat label="Streak" value={streak} suffix=" 🔥" />
+              <p className="text-3xl font-bold tracking-tight">
+                {ready} {ready === 1 ? "card" : "cards"} today
+              </p>
+              <dl className="grid grid-cols-3 gap-2">
+                <Stat label="Due" value={dueTotal} />
+                <Stat label="New" value={newTotal} />
+                <Stat label="Streak" value={streak} />
               </dl>
               <StartButton href="/study" count={ready} />
             </>
           ) : (
-            <div className="flex flex-col items-center gap-2 py-4 text-center">
-              <p className="text-4xl" aria-hidden="true">
-                🎉
-              </p>
-              <p className="text-lg font-semibold">All caught up!</p>
-              <p className="text-zinc-600 dark:text-zinc-400">
+            <div className="flex flex-col gap-1 py-2">
+              <p className="text-3xl font-bold tracking-tight">All caught up!</p>
+              <p className="font-medium">
                 {tomorrow > 0
                   ? `${tomorrow} ${tomorrow === 1 ? "card" : "cards"} due tomorrow.`
                   : "Nothing due tomorrow. Add new words to keep learning."}
               </p>
-              {streak > 0 ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">🔥 {streak}-day streak</p>
-              ) : null}
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="flex justify-between text-sm font-bold">
               <span>Daily goal</span>
               <span>
                 {reviewsToday} / {goal} reviews
@@ -107,26 +120,33 @@ export default async function StudyHome() {
       </FadeIn>
 
       {studyable.length > 0 ? (
-        <section aria-labelledby="by-deck" className="flex flex-col gap-2">
+        <section aria-labelledby="by-deck" className="flex flex-col gap-3">
           <FadeIn index={2}>
-            <h2 id="by-deck" className="text-lg font-semibold">
+            <h2 id="by-deck" className="text-xl font-bold">
               Study a deck
             </h2>
           </FadeIn>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {studyable.map((deck, i) => {
               const deckNew = Math.min(deck.new_count, remainingNew);
               const deckReady = deck.due_count + deckNew;
+              const badge = deckBadge(deck.name, i);
               return (
                 <FadeIn
                   as="li"
                   key={deck.id}
                   index={i + 3}
-                  className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="brutal-box shadow-hard-sm flex items-center gap-3 p-3"
                 >
+                  <span
+                    aria-hidden="true"
+                    className={`border-ink text-on-accent flex size-11 shrink-0 items-center justify-center rounded-lg border-[2.5px] font-bold ${badge.color}`}
+                  >
+                    {badge.initials}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{deck.name}</p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="truncate font-bold">{deck.name}</p>
+                    <p className="text-ink-soft text-sm">
                       {languageLabel(deck.source_lang)} → {languageLabel(deck.target_lang)} ·{" "}
                       {deck.due_count} due · {deckNew} new
                     </p>
@@ -134,15 +154,13 @@ export default async function StudyHome() {
                   {deckReady > 0 ? (
                     <Link
                       href={`/study?deck=${deck.id}`}
-                      className={buttonClass("secondary", "shrink-0 text-sm")}
+                      className={buttonClass("secondary", "shrink-0 px-3 text-sm")}
                       aria-label={`Study ${deck.name}`}
                     >
                       Study
                     </Link>
                   ) : (
-                    <span className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
-                      Done ✓
-                    </span>
+                    <span className="text-ink-soft shrink-0 text-sm font-bold">Done ✓</span>
                   )}
                 </FadeIn>
               );
@@ -154,24 +172,11 @@ export default async function StudyHome() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone = "",
-  suffix = "",
-}: {
-  label: string;
-  value: number;
-  tone?: string;
-  suffix?: string;
-}) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl bg-zinc-50 p-3 dark:bg-zinc-950">
-      <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
-      <dd className={`text-2xl font-semibold ${tone}`}>
-        {value}
-        {suffix}
-      </dd>
+    <div className="border-ink bg-surface text-ink rounded-xl border-[2.5px] px-3 py-2">
+      <dt className="text-xs font-bold tracking-wide uppercase">{label}</dt>
+      <dd className="text-2xl font-bold">{value}</dd>
     </div>
   );
 }

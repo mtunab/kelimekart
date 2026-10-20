@@ -28,11 +28,11 @@ export default async function CardEditPage({
     <PageShell>
       <Link
         href={`/decks/${deck.id}`}
-        className="self-start rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+        className="self-start rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         ← {deck.name}
       </Link>
-      <h1 className="text-2xl font-semibold tracking-tight">Edit card</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Edit card</h1>
       <CardEditForm deck={deck} card={card} />
     </PageShell>
   );

@@ -67,12 +67,12 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
       <div className="flex flex-col gap-1">
         <Link
           href="/decks"
-          className="self-start rounded-md py-1 text-sm text-indigo-700 dark:text-indigo-300"
+          className="self-start rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
         >
           ← Decks
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{deck.name}</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="text-4xl font-bold tracking-tight">{deck.name}</h1>
+        <p className="text-ink-soft text-sm">
           {languageLabel(deck.source_lang)} → {languageLabel(deck.target_lang)}
           {deck.archived ? " · archived" : ""}
         </p>
@@ -99,16 +99,16 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
       </nav>
 
       {!deck.archived ? (
-        <section className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="mb-2 text-lg font-semibold">Add words</h2>
+        <section className="brutal-card p-4">
+          <h2 className="mb-2 text-xl font-bold">Add words</h2>
           <QuickAdd deckId={deck.id} frontLang={deck.source_lang} backLang={deck.target_lang} />
         </section>
       ) : null}
 
       <section aria-labelledby="cards" className="flex flex-col gap-3">
-        <h2 id="cards" className="text-lg font-semibold">
+        <h2 id="cards" className="text-xl font-bold">
           {archived ? "Archived cards" : "Cards"}{" "}
-          <span className="font-normal text-zinc-500 dark:text-zinc-400">({total})</span>
+          <span className="text-ink-soft font-normal">({total})</span>
         </h2>
 
         <form method="get" className="flex gap-2" role="search">
@@ -152,7 +152,7 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
         ) : null}
 
         {cards.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+          <p className="border-ink text-ink-soft rounded-xl border-[2.5px] border-dashed p-6 text-center font-medium">
             {filtering
               ? "No cards match your search."
               : archived
@@ -160,7 +160,7 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
                 : "No words yet. Add your first word above, or import a list."}
           </p>
         ) : (
-          <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
+          <ul className="brutal-card divide-ink divide-y-[2.5px] overflow-hidden">
             {cards.map((card) => (
               <li key={card.id} className="flex items-center gap-2 p-3">
                 <Link
@@ -170,13 +170,10 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
                   <span className="truncate font-medium" lang={deck.source_lang}>
                     {card.front}
                   </span>
-                  <span
-                    className="truncate text-sm text-zinc-600 dark:text-zinc-400"
-                    lang={deck.target_lang}
-                  >
+                  <span className="text-ink-soft truncate text-sm" lang={deck.target_lang}>
                     {card.back}
                     {card.tags.length ? (
-                      <span className="text-zinc-500 dark:text-zinc-400">
+                      <span className="text-ink-soft">
                         {" "}
                         · {card.tags.map((t) => `#${t}`).join(" ")}
                       </span>
@@ -209,7 +206,7 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
             ) : (
               <span />
             )}
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="text-ink-soft text-sm">
               Page {page} / {pageCount}
             </span>
             {page < pageCount ? (
@@ -235,9 +232,9 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
 
 function tagClass(active: boolean) {
   return [
-    "inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-sm",
+    "inline-flex min-h-11 items-center gap-1 rounded-full border-[2.5px] border-ink px-3 text-sm font-bold",
     active
-      ? "border-indigo-600 bg-indigo-600 text-white"
-      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800",
+      ? "bg-pink text-on-accent shadow-hard-sm"
+      : "bg-surface text-ink hover:bg-yellow hover:text-on-accent",
   ].join(" ");
 }

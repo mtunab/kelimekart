@@ -11,7 +11,7 @@ const targets = [
   { file: "public/icons/icon-192.png", size: 192, padding: 0 },
   { file: "public/icons/icon-512.png", size: 512, padding: 0 },
   // "maskable": telefonlar kenarları kırpabilir; içerik güvenli alanda kalsın diye %10 boşluk.
-  { file: "public/icons/maskable-512.png", size: 512, padding: 0.1, background: "#4f46e5" },
+  { file: "public/icons/maskable-512.png", size: 512, padding: 0.1, background: "#ffc900" },
   { file: "public/icons/apple-touch-icon.png", size: 180, padding: 0 },
   { file: "public/icons/favicon-32.png", size: 32, padding: 0 },
 ];

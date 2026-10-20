@@ -22,12 +22,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <AuthCard title="Log in">
       {notice ? <Alert tone={notice.tone}>{notice.text}</Alert> : null}
       <LoginForm next={next} />
-      <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-ink-soft text-center text-sm">
         KelimeKart is invite-only. If you don&apos;t have an account, ask the group admin.
       </p>
       <Link
         href="/help"
-        className="self-center rounded-md px-2 py-2 text-sm text-indigo-700 underline-offset-4 hover:underline dark:text-indigo-300"
+        className="self-center rounded-md px-2 py-2 text-sm font-bold underline decoration-2 underline-offset-4"
       >
         How does it work?
       </Link>
