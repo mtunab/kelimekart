@@ -22,36 +22,36 @@ test.describe("giriş", () => {
 
   test("yanlış şifre anlaşılır hata verir", async ({ page }) => {
     await login(page, user.username, "yanlis-sifre-123");
-    await expect(page.getByText("Kullanıcı adı veya şifre hatalı.")).toBeVisible();
-    await expect(page.getByLabel("Kullanıcı adı")).toHaveValue(user.username);
+    await expect(page.getByText("Wrong username or password.")).toBeVisible();
+    await expect(page.getByLabel("Username")).toHaveValue(user.username);
   });
 
   test("kullanıcı adıyla giriş (büyük harfle yazsa da) → ana sayfa → çıkış", async ({ page }) => {
     await login(page, user.username.toUpperCase(), user.password);
-    await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Hi, Deniz/ })).toBeVisible();
 
     await page.goto("/login");
     await expect(page).toHaveURL(/\/$/);
 
     await logout(page);
-    await expect(page.getByText("Çıkış yaptın.")).toBeVisible();
+    await expect(page.getByText("You've logged out.")).toBeVisible();
     await page.goto("/");
     await expect(page).toHaveURL(/\/login$/);
   });
 
   test("ayarlarda kullanıcı adı görünür", async ({ page }) => {
     await login(page, user.username, user.password);
-    await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Hi, Deniz/ })).toBeVisible();
     await page.goto("/settings");
-    await expect(page.getByText(`Kullanıcı adın: ${user.username}`)).toBeVisible();
+    await expect(page.getByText(`Your username: ${user.username}`)).toBeVisible();
   });
 
   test("şifremi unuttum: yöneticiye başvurmayı anlatır", async ({ page }) => {
     await page.goto("/login");
-    await page.getByRole("link", { name: "Şifremi unuttum" }).click();
-    await expect(page.getByRole("heading", { name: "Şifremi unuttum" })).toBeVisible();
-    await expect(page.getByText(/grup yöneticisi açar/)).toBeVisible();
-    await page.getByRole("link", { name: "Girişe dön" }).click();
+    await page.getByRole("link", { name: "Forgot password?" }).click();
+    await expect(page.getByRole("heading", { name: "Forgot password" })).toBeVisible();
+    await expect(page.getByText(/the group admin creates accounts/)).toBeVisible();
+    await page.getByRole("link", { name: "Back to log in" }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
 
@@ -63,9 +63,9 @@ test.describe("giriş", () => {
     expect(error).toBeNull();
 
     await login(page, user.username, user.password);
-    await expect(page.getByText("Kullanıcı adı veya şifre hatalı.")).toBeVisible();
+    await expect(page.getByText("Wrong username or password.")).toBeVisible();
     await login(page, user.username, newPassword);
-    await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Hi, Deniz/ })).toBeVisible();
     user.password = newPassword;
   });
 });

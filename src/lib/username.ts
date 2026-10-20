@@ -9,7 +9,7 @@ export const INTERNAL_EMAIL_DOMAIN = "users.kelimekart.invalid";
 export const USERNAME_PATTERN = /^[a-z0-9._-]{3,20}$/;
 
 export const usernameSchema = z.string().trim().toLowerCase().regex(USERNAME_PATTERN, {
-  error: "Kullanıcı adı 3-20 karakter olmalı: küçük harf, rakam, nokta, alt çizgi veya tire.",
+  error: "Username must be 3-20 characters: lowercase letters, digits, dot, underscore or dash.",
 });
 
 export function usernameToEmail(username: string): string {

@@ -20,13 +20,13 @@ describe("ayarlar doğrulama", () => {
   });
 
   it.each([
-    [{ display_name: "  " }, "Görünen ad boş olamaz."],
-    [{ timezone: "Mars/Olympus" }, "Geçersiz saat dilimi."],
-    [{ daily_new_limit: "-1" }, "En az 0."],
-    [{ daily_new_limit: "201" }, "En fazla 200."],
-    [{ daily_new_limit: "2.5" }, "Tam sayı yaz."],
-    [{ daily_goal_reviews: "0" }, "En az 1."],
-    [{ daily_goal_reviews: "abc" }, "Günlük hedef bir sayı olmalı."],
+    [{ display_name: "  " }, "Display name can't be empty."],
+    [{ timezone: "Mars/Olympus" }, "Invalid time zone."],
+    [{ daily_new_limit: "-1" }, "Minimum is 0."],
+    [{ daily_new_limit: "201" }, "Maximum is 200."],
+    [{ daily_new_limit: "2.5" }, "Use a whole number."],
+    [{ daily_goal_reviews: "0" }, "Minimum is 1."],
+    [{ daily_goal_reviews: "abc" }, "Daily goal must be a number."],
   ])("%j → %s", (patch, message) => {
     const result = profileSettingsSchema.safeParse({ ...valid, ...patch });
     expect(result.error?.issues[0]?.message).toBe(message);

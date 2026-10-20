@@ -14,7 +14,7 @@ export const LIMITS = {
   importRows: 2000,
 } as const;
 
-export const uuidSchema = z.uuid({ error: "Geçersiz kayıt." });
+export const uuidSchema = z.uuid({ error: "Invalid record." });
 
 /** "a, b , c" → ["a","b","c"]: kırpılmış, boşlar atılmış, büyük/küçük harf duyarsız tekrarsız. */
 export function splitTags(input: string): string[] {
@@ -36,30 +36,30 @@ const tagsSchema = z
     z
       .string()
       .min(1)
-      .max(LIMITS.tag, { error: `Etiket en fazla ${LIMITS.tag} karakter.` }),
+      .max(LIMITS.tag, { error: `A tag can be at most ${LIMITS.tag} characters.` }),
   )
-  .max(LIMITS.tags, { error: `En fazla ${LIMITS.tags} etiket.` });
+  .max(LIMITS.tags, { error: `At most ${LIMITS.tags} tags.` });
 
 const optionalText = (max: number, label: string) =>
   z
     .string()
     .trim()
-    .max(max, { error: `${label} en fazla ${max} karakter.` })
+    .max(max, { error: `${label} can be at most ${max} characters.` })
     .transform((value) => (value === "" ? null : value));
 
 export const cardInputSchema = z.object({
   front: z
     .string()
     .trim()
-    .min(1, { error: "Ön yüz boş olamaz." })
-    .max(LIMITS.front, { error: `Ön yüz en fazla ${LIMITS.front} karakter.` }),
+    .min(1, { error: "Front can't be empty." })
+    .max(LIMITS.front, { error: `Front can be at most ${LIMITS.front} characters.` }),
   back: z
     .string()
     .trim()
-    .min(1, { error: "Arka yüz boş olamaz." })
-    .max(LIMITS.back, { error: `Arka yüz en fazla ${LIMITS.back} karakter.` }),
-  example: optionalText(LIMITS.example, "Örnek cümle").default(""),
-  note: optionalText(LIMITS.note, "Not").default(""),
+    .min(1, { error: "Back can't be empty." })
+    .max(LIMITS.back, { error: `Back can be at most ${LIMITS.back} characters.` }),
+  example: optionalText(LIMITS.example, "Example").default(""),
+  note: optionalText(LIMITS.note, "Note").default(""),
   tags: z.string().default("").transform(splitTags).pipe(tagsSchema),
 });
 
@@ -70,21 +70,21 @@ export const deckInputSchema = z
     name: z
       .string()
       .trim()
-      .min(1, { error: "Deste adı boş olamaz." })
-      .max(LIMITS.deckName, { error: `Deste adı en fazla ${LIMITS.deckName} karakter.` }),
-    source_lang: z.enum(LANGUAGE_CODES, { error: "Geçersiz dil." }),
-    target_lang: z.enum(LANGUAGE_CODES, { error: "Geçersiz dil." }),
+      .min(1, { error: "Deck name can't be empty." })
+      .max(LIMITS.deckName, { error: `Deck name can be at most ${LIMITS.deckName} characters.` }),
+    source_lang: z.enum(LANGUAGE_CODES, { error: "Invalid language." }),
+    target_lang: z.enum(LANGUAGE_CODES, { error: "Invalid language." }),
   })
   .refine((d) => d.source_lang !== d.target_lang, {
-    error: "Kaynak ve hedef dil farklı olmalı.",
+    error: "Word and meaning languages must be different.",
     path: ["target_lang"],
   });
 
 export const cardListParamsSchema = z.object({
   q: z.string().trim().max(LIMITS.search).catch(""),
-  etiket: z.string().trim().max(LIMITS.tag).catch(""),
-  sayfa: z.coerce.number().int().min(1).max(10_000).catch(1),
-  arsiv: z
+  tag: z.string().trim().max(LIMITS.tag).catch(""),
+  page: z.coerce.number().int().min(1).max(10_000).catch(1),
+  archived: z
     .string()
     .optional()
     .transform((v) => v === "1")
@@ -102,5 +102,5 @@ export const importRowsSchema = z
       tags: tagsSchema,
     }),
   )
-  .min(1, { error: "İçe aktarılacak kart yok." })
-  .max(LIMITS.importRows, { error: `Tek seferde en fazla ${LIMITS.importRows} kart.` });
+  .min(1, { error: "Nothing to import." })
+  .max(LIMITS.importRows, { error: `At most ${LIMITS.importRows} cards at once.` });

@@ -45,12 +45,12 @@ describe("giriş kutusu", () => {
     expect(loginIdentifierToEmail("x@y")).toBeNull();
   });
 
-  it("giriş doğrulaması e-postayı üretir, Türkçe hata verir", () => {
+  it("giriş doğrulaması e-postayı üretir, anlaşılır hata verir", () => {
     expect(loginSchema.parse({ identifier: "tuna", password: "x" }).identifier).toBe(
       "tuna@users.kelimekart.invalid",
     );
     expect(loginSchema.safeParse({ identifier: "", password: "x" }).error?.issues[0]?.message).toBe(
-      "Kullanıcı adını yaz.",
+      "Enter your username.",
     );
     expect(loginSchema.safeParse({ identifier: "tuna", password: "" }).success).toBe(false);
   });
@@ -59,12 +59,12 @@ describe("giriş kutusu", () => {
 describe("yeni şifre", () => {
   it("8 karakterden kısa şifreyi reddeder", () => {
     const result = newPasswordSchema.safeParse({ password: "anut", confirm: "anut" });
-    expect(result.error?.issues[0]?.message).toMatch(/en az 8/);
+    expect(result.error?.issues[0]?.message).toMatch(/at least 8/);
   });
 
   it("tekrar alanı farklıysa reddeder", () => {
     const result = newPasswordSchema.safeParse({ password: "uzunsifre1", confirm: "uzunsifre2" });
-    expect(result.error?.issues[0]?.message).toBe("Şifreler aynı değil.");
+    expect(result.error?.issues[0]?.message).toBe("Passwords don't match.");
   });
 
   it("uygun şifreyi kabul eder", () => {
@@ -76,8 +76,8 @@ describe("yeni şifre", () => {
 
 describe("güvenli yönlendirme", () => {
   it.each([
-    ["/desteler", "/desteler"],
-    ["/calis?deste=1", "/calis?deste=1"],
+    ["/decks", "/decks"],
+    ["/study?deck=1", "/study?deck=1"],
     ["//kotu.com", "/"],
     ["/\\kotu.com", "/"],
     ["https://kotu.com", "/"],
@@ -118,7 +118,7 @@ describe("kullanıcı yönetim komutu", () => {
   });
 
   it("geçersiz kullanıcı adını ve bilinmeyen komutu reddeder", () => {
-    expect(() => parseUserArgs(["add", "a b"])).toThrow(/3-20 karakter/);
+    expect(() => parseUserArgs(["add", "a b"])).toThrow(/3-20 characters/);
     expect(() => parseUserArgs(["sil", "ali"])).toThrow(/Kullanım/);
   });
 });

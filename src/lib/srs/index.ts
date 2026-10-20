@@ -19,10 +19,10 @@ export type { Card, Grade };
 export const GRADES = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const;
 
 export const GRADE_LABELS: Record<Grade, string> = {
-  [Rating.Again]: "Tekrar",
-  [Rating.Hard]: "Zor",
-  [Rating.Good]: "İyi",
-  [Rating.Easy]: "Kolay",
+  [Rating.Again]: "Again",
+  [Rating.Hard]: "Hard",
+  [Rating.Good]: "Good",
+  [Rating.Easy]: "Easy",
 };
 
 const scheduler = fsrs(
@@ -99,15 +99,15 @@ export function previewDueDates(card: Card, now: Date): Record<Grade, Date> {
   };
 }
 
-/** İki an arasındaki süreyi kısa Türkçe metne çevirir: "1 dk", "10 dk", "3 sa", "4 gün", "2 ay", "1,5 yıl". */
+/** İki an arasındaki süreyi kısa metne çevirir: "1m", "10m", "3h", "4d", "2mo", "1.5y". */
 export function formatInterval(from: Date, to: Date): string {
   const minutes = Math.max(1, Math.round((to.getTime() - from.getTime()) / 60_000));
-  if (minutes < 60) return `${minutes} dk`;
+  if (minutes < 60) return `${minutes}m`;
   const hours = minutes / 60;
-  if (hours < 24) return `${Math.round(hours)} sa`;
+  if (hours < 24) return `${Math.round(hours)}h`;
   const days = hours / 24;
-  if (days < 30) return `${Math.round(days)} gün`;
-  if (days < 365) return `${Math.round(days / 30)} ay`;
+  if (days < 30) return `${Math.round(days)}d`;
+  if (days < 365) return `${Math.round(days / 30)}mo`;
   const years = Math.round((days / 365) * 10) / 10;
-  return `${years.toLocaleString("tr-TR")} yıl`;
+  return `${years}y`;
 }

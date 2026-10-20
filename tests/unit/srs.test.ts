@@ -136,12 +136,12 @@ describe("SRS: veritabanı dönüşümü", () => {
 
 describe("yardımcılar", () => {
   it.each([
-    [0, "1 dk"],
-    [10, "10 dk"],
-    [90, "2 sa"],
-    [60 * 24 * 3, "3 gün"],
-    [60 * 24 * 65, "2 ay"],
-    [60 * 24 * 365 * 1.5, "1,5 yıl"],
+    [0, "1m"],
+    [10, "10m"],
+    [90, "2h"],
+    [60 * 24 * 3, "3d"],
+    [60 * 24 * 65, "2mo"],
+    [60 * 24 * 365 * 1.5, "1.5y"],
   ])("%i dakika → %s", (mins, text) => {
     expect(formatInterval(T0, new Date(T0.getTime() + mins * 60_000))).toBe(text);
   });

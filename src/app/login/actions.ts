@@ -20,14 +20,14 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
     password: parsed.data.password,
   });
   if (error) {
-    console.error("Giriş başarısız:", error.code ?? "kod-yok", error.status ?? "-");
+    console.error("Sign-in failed:", error.code ?? "no-code", error.status ?? "-");
     if (error.status === 429) {
       return {
-        error: "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar dene.",
+        error: "Too many attempts. Please wait a few minutes and try again.",
         values: { username },
       };
     }
-    return { error: "Kullanıcı adı veya şifre hatalı.", values: { username } };
+    return { error: "Wrong username or password.", values: { username } };
   }
 
   redirect(safeNextPath(field(formData, "next")));

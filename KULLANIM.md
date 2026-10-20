@@ -1,53 +1,54 @@
-# KelimeKart — Kullanım Kılavuzu
+# KelimeKart — User guide
 
-Kelimeleri unutmadan ezberlemen için: her kartı tam unutmak üzereyken tekrar gösterir.
-Adres: **https://kelimekart-five.vercel.app** · Bu kılavuz uygulamada da var: **Ayarlar → Yardım**.
+KelimeKart helps you memorize words for good: it shows each card again right before you'd forget it.
+Address: **https://kelimekart-five.vercel.app** · This guide is also in the app: **Settings → Help** (`/help`).
 
-## 1. İlk giriş
+## 1. First login
 
-1. Grup yöneticisi sana bir **kullanıcı adı** ve **şifre** verir. Siteye gir ve bunlarla giriş yap.
-2. İstersen **Ayarlar → Şifre değiştir**'den kendi şifreni koy (en az 8 karakter). Hesabın kalıcıdır; sadece yönetici silebilir.
-3. **Telefonuna uygulama gibi ekle:** iPhone (Safari) → Paylaş → **Ana Ekrana Ekle**.
-   Android (Chrome) → ⋮ menü → **Uygulamayı yükle** / **Ana ekrana ekle**.
+1. The group admin gives you a **username** and a **password**. Open the site and log in with them.
+2. If you like, set your own password under **Settings → Change password** (at least 8 characters). Your account is permanent; only the admin can remove it.
+3. **Add it to your phone like an app:** iPhone (Safari) → Share → **Add to Home Screen**.
+   Android (Chrome) → ⋮ menu → **Install app** / **Add to Home screen**.
 
-## 2. Deste ve kelime ekleme
+## 2. Decks and words
 
-- **Desteler** → "Yeni deste": ad ve dil çiftini seç (ör. İngilizce → Türkçe).
-- **Hızlı ekleme:** destede **Kelime** yaz → Enter → **Anlamı** yaz → Enter. Alanlar boşalır, sıradaki kelimeye geç.
-  Aynı kelime zaten varsa "zaten var" der, üstüne yazmaz.
-- **Toplu ekleme:** **İçe aktar** → her satıra `kelime ; anlam ; örnek cümle` yaz (ya da Excel'den yapıştır / CSV seç)
-  → **Önizle** → **Ekle**. Tekrar edenler otomatik atlanır.
-- Kartı düzeltmek için listede kelimeye dokun. Örnek cümle, not ve etiket (virgülle: `fiil, A2`) ekleyebilirsin.
-- Kartı **Arşivle** → artık çalışmada çıkmaz (silinmez, geri alınabilir).
-- **Üyeler:** deste sahibi gruptan kişi ekler. Kelimeler ortaktır, ama **herkesin ilerlemesi kendine özeldir.**
+- **Decks** → "New deck": pick a name and a language pair (e.g. English → Turkish).
+- **Quick add:** in a deck, type the **Word** → Enter → type the **Meaning** → Enter. The fields clear so you can type the next word.
+  If the word already exists you'll see "already in this deck"; nothing is overwritten.
+- **Bulk add:** **Import** → write `word ; meaning ; example sentence` on each line (or paste from Excel / choose a CSV)
+  → **Preview** → **Add**. Duplicates are skipped automatically.
+- Tap a word in the list to edit it. You can add an example sentence, a note and tags (comma-separated: `verb, A2`).
+- **Archive** a card → it no longer appears in study (it isn't deleted and can be restored).
+- **Members:** the deck owner adds people from the group. Words are shared, but **everyone's progress is their own.**
 
-## 3. Çalışma
+## 3. Studying
 
-**Çalış**'a bas. Kelimeyi gör, anlamını aklından söyle, sonra kartı çevir ve ne kadar iyi hatırladığını seç:
+The **Study** tab (home page) shows what's waiting today. Tap **Start studying**, look at the word, say the meaning
+in your head, then flip the card and pick how well you remembered:
 
-| Düğme      | Ne zaman                 | Klavye |
-| ---------- | ------------------------ | ------ |
-| **Tekrar** | Hatırlamadım             | 1      |
-| **Zor**    | Zorlandım ama hatırladım | 2      |
-| **İyi**    | Hatırladım               | 3      |
-| **Kolay**  | Hiç düşünmeden bildim    | 4      |
+| Button    | When                          | Key |
+| --------- | ----------------------------- | --- |
+| **Again** | I didn't remember             | 1   |
+| **Hard**  | I remembered, but it was hard | 2   |
+| **Good**  | I remembered                  | 3   |
+| **Easy**  | I knew it instantly           | 4   |
 
-- Düğmelerin altında kartın ne zaman tekrar geleceği yazar ("10 dk", "3 gün"…). Dürüst seç; uygulama gerisini ayarlar.
-- **Çevir:** karta dokun ya da **Boşluk**. **Telefonda:** çevirdikten sonra kartı **sağa kaydır = İyi**, **sola = Tekrar**.
-- **🔊 Dinle:** kelimeyi okur. **↶ Geri al** (klavyede **Z**): son cevabını geri alır.
-- Her gün varsayılan olarak **10 yeni kart** + vadesi gelen tekrarlar gelir. Bitince özet: kaç kart, doğruluk, yarının yükü.
-- Gün **sabah 04:00**'te başlar. Her gün en az 1 kart çalışırsan **seri (🔥)** büyür; bir gün atlarsan sıfırlanır.
+- Under each button you'll see when the card comes back ("10m", "3d"…). Be honest; the app handles the rest.
+- **Flip:** tap the card or press **Space**. **On a phone:** after flipping, swipe the card **right = Good**, **left = Again**.
+- **🔊 Listen** reads the word aloud. **↶ Undo** (**Z** on a keyboard) takes back your last answer.
+- By default you get **10 new cards** a day plus the reviews that are due. At the end you see a summary: cards, accuracy, tomorrow's load.
+- A new day starts at **4:00 AM**. Study at least one card every day to grow your **streak (🔥)**; skip a day and it resets.
 
-## 4. İstatistik ve ayarlar
+## 4. Stats and settings
 
-- **İstatistik:** bugün ve son 7 gün, doğruluk, seri, 14 günlük tahmin, destelere göre yeni / öğreniliyor / olgun kartlar.
-  **Grup panosu:** herkesin sadece adı, bugünkü tekrar sayısı ve serisi görünür (kimin neyi bilmediği görünmez).
-- **Ayarlar:** görünen ad, saat dilimi, günlük yeni kart sayısı, günlük hedef, şifre değiştirme, tema (açık / koyu / sistem).
+- **Stats:** today and the last 7 days, accuracy, streak, a 14-day forecast, and new / learning / mature cards per deck.
+  **Group board:** shows only each person's name, today's review count and streak (nobody sees which words you missed).
+- **Settings:** display name, time zone, new cards per day, daily goal, change password, theme (light / dark / system).
 
-## 5. Sorun olursa
+## 5. Troubleshooting
 
-- **Şifremi unuttum:** grup yöneticisine söyle, sana yeni şifre verir.
-- **"Çok fazla deneme yapıldı":** 5 dakika bekle.
-- **Yeni kart gelmiyor:** günün yeni kart sayısı dolmuş; **Ayarlar**'dan artırabilirsin.
-- **"Dinle" ses çıkarmıyor:** cihazında o dilin sesi yok.
-- **İnternet yokken** uygulama çalışmaz; bağlantı gelince kaldığın yerden devam.
+- **Forgot your password:** tell the group admin; they'll give you a new one.
+- **"Too many attempts":** wait 5 minutes.
+- **No new cards:** today's new-card limit is reached; you can raise it in **Settings**.
+- **"Listen" makes no sound:** your device has no voice for that language.
+- **No internet:** the app needs a connection; once you're back online, carry on where you left off.

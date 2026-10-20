@@ -152,20 +152,20 @@ export function parseImport(text: string): ParseResult {
       c.trim(),
     );
 
-    if (!front) return void errors.push({ line: row.line, message: "Ön yüz boş." });
-    if (!back) return void errors.push({ line: row.line, message: `"${front}" için anlam yok.` });
+    if (!front) return void errors.push({ line: row.line, message: "Word is empty." });
+    if (!back) return void errors.push({ line: row.line, message: `"${front}" has no meaning.` });
     if (front.length > LIMITS.front) {
-      return void errors.push({ line: row.line, message: "Ön yüz çok uzun." });
+      return void errors.push({ line: row.line, message: "Word is too long." });
     }
     if (back.length > LIMITS.back) {
-      return void errors.push({ line: row.line, message: "Arka yüz çok uzun." });
+      return void errors.push({ line: row.line, message: "Meaning is too long." });
     }
     if (example.length > LIMITS.example || note.length > LIMITS.note) {
-      return void errors.push({ line: row.line, message: "Örnek veya not çok uzun." });
+      return void errors.push({ line: row.line, message: "Example or note is too long." });
     }
     const tagList = splitTags(tags);
     if (tagList.length > LIMITS.tags || tagList.some((t) => t.length > LIMITS.tag)) {
-      return void errors.push({ line: row.line, message: "Etiketler geçersiz." });
+      return void errors.push({ line: row.line, message: "Invalid tags." });
     }
 
     const key = normalizeFront(front);

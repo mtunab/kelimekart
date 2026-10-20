@@ -20,11 +20,11 @@ describe("kart doğrulama", () => {
     ).toEqual({ front: "apple", back: "elma", example: null, note: null, tags: [] });
   });
 
-  it("boş ön/arka yüzü Türkçe mesajla reddeder", () => {
+  it("boş ön/arka yüzü anlaşılır mesajla reddeder", () => {
     const front = cardInputSchema.safeParse({ front: "  ", back: "x" });
-    expect(front.error?.issues[0]?.message).toBe("Ön yüz boş olamaz.");
+    expect(front.error?.issues[0]?.message).toBe("Front can't be empty.");
     const back = cardInputSchema.safeParse({ front: "x", back: "" });
-    expect(back.error?.issues[0]?.message).toBe("Arka yüz boş olamaz.");
+    expect(back.error?.issues[0]?.message).toBe("Back can't be empty.");
   });
 
   it("çok uzun alanları reddeder", () => {
@@ -62,18 +62,18 @@ describe("deste doğrulama", () => {
 
 describe("liste parametreleri", () => {
   it("bozuk parametreleri güvenli varsayılana çevirir", () => {
-    expect(cardListParamsSchema.parse({ sayfa: "abc", q: "x".repeat(500), arsiv: "evet" })).toEqual(
-      {
-        q: "",
-        etiket: "",
-        sayfa: 1,
-        arsiv: false,
-      },
-    );
-    expect(cardListParamsSchema.parse({ sayfa: "3", q: " elma ", arsiv: "1" })).toMatchObject({
-      sayfa: 3,
+    expect(
+      cardListParamsSchema.parse({ page: "abc", q: "x".repeat(500), archived: "yes" }),
+    ).toEqual({
+      q: "",
+      tag: "",
+      page: 1,
+      archived: false,
+    });
+    expect(cardListParamsSchema.parse({ page: "3", q: " elma ", archived: "1" })).toMatchObject({
+      page: 3,
       q: "elma",
-      arsiv: true,
+      archived: true,
     });
   });
 });

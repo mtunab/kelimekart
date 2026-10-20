@@ -30,10 +30,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // getUser() sunucuya sorarak doğrular; çerezdeki bilgiye körü körüne güvenmez.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() oturum anahtarının imzasını ve süresini yerelde doğrular (proje ES256 anahtar
+  // kullanıyor); getUser() gibi her istekte Supabase'e gitmez. Süresi dolmak üzereyse önce tazeler.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? { id: data.claims.sub } : null;
 
   return { response, user };
 }

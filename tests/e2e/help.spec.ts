@@ -1,15 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-test("yardım sayfası girişsiz açılır ve giriş sayfasından bağlantısı var", async ({ page }) => {
+test("yardım sayfası (/help) girişsiz açılır ve giriş sayfasından bağlantısı var", async ({
+  page,
+}) => {
   await page.goto("/login");
-  await page.getByRole("link", { name: "Nasıl kullanılır?" }).click();
-  await expect(page).toHaveURL(/\/yardim$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Kullanım kılavuzu" })).toBeVisible();
+  await page.getByRole("link", { name: "How does it work?" }).click();
+  await expect(page).toHaveURL(/\/help$/);
+  await expect(page.getByRole("heading", { level: 1, name: "User guide" })).toBeVisible();
   for (const section of [
-    "1. İlk giriş",
-    "2. Deste ve kelime ekleme",
-    "3. Çalışma",
-    "5. Sorun olursa",
+    "1. First login",
+    "2. Decks and words",
+    "3. Studying",
+    "5. Troubleshooting",
   ]) {
     await expect(page.getByRole("heading", { name: section })).toBeVisible();
   }

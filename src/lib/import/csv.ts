@@ -36,5 +36,5 @@ export function csvFileName(deckName: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
-  return `kelimekart-${slug || "deste"}.csv`;
+  return `kelimekart-${slug || "deck"}.csv`;
 }

@@ -4,7 +4,8 @@ Arkadaş grubu (en fazla 5 kişi) için aralıklı tekrarlı kelime kartı uygul
 Kelimeler ortak destelerde durur; herkesin çalışma ilerlemesi kendine özeldir.
 
 - **Canlı site:** https://kelimekart-five.vercel.app
-- **Kullanıcılar için kılavuz:** [KULLANIM.md](KULLANIM.md) (aynı içerik uygulamada **Ayarlar → Yardım** sayfasında)
+- **Kullanıcılar için kılavuz:** [KULLANIM.md](KULLANIM.md) (aynı içerik uygulamada **Settings → Help** sayfasında, adres `/help`)
+- **Arayüz dili İngilizce.** Aşağıda düğme ve sayfa adları uygulamada göründüğü gibi (İngilizce) yazıldı.
 - **Proje kuralları ve karar günlüğü:** [CLAUDE.md](CLAUDE.md)
 
 ---
@@ -12,10 +13,10 @@ Kelimeler ortak destelerde durur; herkesin çalışma ilerlemesi kendine özeldi
 ## 1. Nasıl kullanılır (kısaca)
 
 1. Grup yöneticisi (Tuna) sana bir hesap açar ve **kullanıcı adını + şifreni** verir. Onlarla giriş yaparsın.
-2. **Desteler** sayfasında bir deste oluşturursun ya da sana paylaşılan bir desteyi açarsın.
-3. Kelime eklersin: **Kelime** ve **Anlamı** yazıp Enter'a basarsın (art arda hızlıca). Çok kelime için **İçe aktar**.
-4. **Çalış**'a basarsın: kartı çevir, ne kadar iyi hatırladığını seç. Uygulama kartı ne zaman tekrar göstereceğini kendisi hesaplar.
-5. **İstatistik** sayfasında ilerlemeni ve grubun bugünkü durumunu görürsün.
+2. **Decks** sekmesinde bir deste oluşturursun ya da sana paylaşılan bir desteyi açarsın.
+3. Kelime eklersin: **Word** ve **Meaning** yazıp Enter'a basarsın (art arda hızlıca). Çok kelime için **Import**.
+4. Ana sayfa **Study** başlangıç ekranıdır: bugün kaç kart beklediğini görürsün, **Start studying**'e basarsın. Kartı çevir (dönerek açılır), ne kadar iyi hatırladığını seç. Uygulama kartı ne zaman tekrar göstereceğini kendisi hesaplar.
+5. **Stats** sayfasında ilerlemeni ve grubun bugünkü durumunu görürsün.
 
 Ayrıntılar: [KULLANIM.md](KULLANIM.md).
 
@@ -36,7 +37,7 @@ pnpm user remove ali --prod        # hesabı siler (kullanıcı adını yazarak 
 
 - **Kullanıcı adı:** 3-20 karakter; küçük harf, rakam, nokta, alt çizgi, tire (Türkçe harf yok). Girişte büyük/küçük harf fark etmez.
 - **Şifre:** en az 8 karakter. Komut satırına yazılmaz; komut sorunca gizli girilir (ekranda ve komut geçmişinde kalmaz).
-- Kişiye kullanıcı adını ve şifresini ilet; girdikten sonra **Ayarlar → Şifre değiştir**'den kendi şifresini koyabilir.
+- Kişiye kullanıcı adını ve şifresini ilet; girdikten sonra **Settings → Change password**'den kendi şifresini koyabilir.
 - `--prod` yazılmazsa komut **dev** (deneme) ortamında çalışır.
 - ⚠️ Hesap silinince kişinin **sahibi olduğu desteler ve kartları da silinir.** Önce yedek al (bölüm 3).
 - Arka planda her kullanıcı adı `ad@users.kelimekart.invalid` iç adresine eşlenir (Supabase e-posta ister;
@@ -71,22 +72,22 @@ pnpm restore backups/kelimekart-prod-<tarih>.json --prod
 
 ## 4. Bilinen sınırlamalar
 
-| #   | Sınırlama                                                                                                                                                                                                                                             | Ne yapmalı                                                                  |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | **"Şifremi unuttum" kendi kendine çalışmaz** (e-posta yok).                                                                                                                                                                                           | Yönetici `pnpm user password ad --prod` ile yeni şifre verir.               |
-| 2   | **Supabase ücretsiz projesi 7 gün hiç kullanılmazsa duraklatılır.** Site açılır ama giriş/çalışma hata verir.                                                                                                                                         | Supabase → kelimekart-prod → **Restore project**. Düzenli kullanımda olmaz. |
-| 3   | **Otomatik yedek yok** (ücretsiz plan).                                                                                                                                                                                                               | Haftalık `pnpm backup --prod` (bölüm 3).                                    |
-| 4   | **Çevrimdışı çalışma yok.** Uygulama telefona eklenebilir ama internet olmadan kart gösteremez; bağlantı yoksa "İnternet bağlantısı yok" sayfası açılır. Yavaş bağlantıda cevaplar arka planda 3 kez denenir; olmazsa kart geri gelir ve uyarı çıkar. | İnternet gelince devam et.                                                  |
-| 5   | **Geri al, seriyi (streak) azaltmaz.** Günün tek cevabını geri alsan bile o gün seri sayılmış olur.                                                                                                                                                   | —                                                                           |
-| 6   | **Telaffuz cihazın seslerine bağlı.** Bazı cihazlarda bazı diller için ses yoktur; o zaman "Dinle" ses çıkarmaz.                                                                                                                                      | Cihazın dil/ses ayarlarından dil paketi eklenebilir.                        |
-| 7   | **Kart ve deste kalıcı olarak silinmez, sadece arşivlenir.** Destenin sahipliği başkasına devredilemez.                                                                                                                                               | Arşivden geri alınabilir.                                                   |
-| 8   | **Ortak destede her üye her kartı düzenleyebilir ve arşivleyebilir** (sadece ekleyen değil).                                                                                                                                                          | Grupta anlaşarak kullanın.                                                  |
-| 9   | Sınırlar: en fazla **5 kişi**, tek seferde en fazla **2000 kart** içe aktarma, kart başına en fazla **10 etiket**, kelime en fazla 200, anlam en fazla 500 karakter. Kullanıcı adı sonradan değiştirilemez.                                           | —                                                                           |
-| 10  | Arama kelimenin bir parçasını arar (ör. "elm" → "elma"); yazım hatasını tolere etmez. Büyük/küçük harf ve i/ı farkı önemsizdir.                                                                                                                       | —                                                                           |
-| 11  | "Gün" senin saat dilimine göre **sabah 04:00**'te başlar (gece 02:00'de çalışmak hâlâ "dün" sayılır).                                                                                                                                                 | Saat dilimini **Ayarlar**'dan değiştir.                                     |
-| 12  | Yalnızca `main` dalı canlıya çıkar; Vercel'in deneme (preview) yayınlarında veritabanı bilgisi olmadığı için çalışmazlar.                                                                                                                             | Bilerek böyle: deneme yayınları gerçek veriye dokunmasın.                   |
-| 13  | Bazı ağlar veritabanı kapısını (5432) engelleyebilir; o zaman `pnpm db:push` / `db:status` bağlanamaz.                                                                                                                                                | Migration dosyasını Supabase → **SQL Editor**'de çalıştır.                  |
-| 14  | Vercel Hobby planı ticari olmayan kullanım içindir.                                                                                                                                                                                                   | Ticari kullanıma geçilirse plan değişmeli.                                  |
+| #   | Sınırlama                                                                                                                                                                                                                                            | Ne yapmalı                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | **"Şifremi unuttum" kendi kendine çalışmaz** (e-posta yok).                                                                                                                                                                                          | Yönetici `pnpm user password ad --prod` ile yeni şifre verir.               |
+| 2   | **Supabase ücretsiz projesi 7 gün hiç kullanılmazsa duraklatılır.** Site açılır ama giriş/çalışma hata verir.                                                                                                                                        | Supabase → kelimekart-prod → **Restore project**. Düzenli kullanımda olmaz. |
+| 3   | **Otomatik yedek yok** (ücretsiz plan).                                                                                                                                                                                                              | Haftalık `pnpm backup --prod` (bölüm 3).                                    |
+| 4   | **Çevrimdışı çalışma yok.** Uygulama telefona eklenebilir ama internet olmadan kart gösteremez; bağlantı yoksa "No internet connection" sayfası açılır. Yavaş bağlantıda cevaplar arka planda 3 kez denenir; olmazsa kart geri gelir ve uyarı çıkar. | İnternet gelince devam et.                                                  |
+| 5   | **Geri al, seriyi (streak) azaltmaz.** Günün tek cevabını geri alsan bile o gün seri sayılmış olur.                                                                                                                                                  | —                                                                           |
+| 6   | **Telaffuz cihazın seslerine bağlı.** Bazı cihazlarda bazı diller için ses yoktur; o zaman "Listen" ses çıkarmaz.                                                                                                                                    | Cihazın dil/ses ayarlarından dil paketi eklenebilir.                        |
+| 7   | **Kart ve deste kalıcı olarak silinmez, sadece arşivlenir.** Destenin sahipliği başkasına devredilemez.                                                                                                                                              | Arşivden geri alınabilir.                                                   |
+| 8   | **Ortak destede her üye her kartı düzenleyebilir ve arşivleyebilir** (sadece ekleyen değil).                                                                                                                                                         | Grupta anlaşarak kullanın.                                                  |
+| 9   | Sınırlar: en fazla **5 kişi**, tek seferde en fazla **2000 kart** içe aktarma, kart başına en fazla **10 etiket**, kelime en fazla 200, anlam en fazla 500 karakter. Kullanıcı adı sonradan değiştirilemez.                                          | —                                                                           |
+| 10  | Arama kelimenin bir parçasını arar (ör. "elm" → "elma"); yazım hatasını tolere etmez. Büyük/küçük harf ve i/ı farkı önemsizdir.                                                                                                                      | —                                                                           |
+| 11  | "Gün" senin saat dilimine göre **sabah 04:00**'te başlar (gece 02:00'de çalışmak hâlâ "dün" sayılır).                                                                                                                                                | Saat dilimini **Settings**'ten değiştir.                                    |
+| 12  | Yalnızca `main` dalı canlıya çıkar; Vercel'in deneme (preview) yayınlarında veritabanı bilgisi olmadığı için çalışmazlar.                                                                                                                            | Bilerek böyle: deneme yayınları gerçek veriye dokunmasın.                   |
+| 13  | Bazı ağlar veritabanı kapısını (5432) engelleyebilir; o zaman `pnpm db:push` / `db:status` bağlanamaz.                                                                                                                                               | Migration dosyasını Supabase → **SQL Editor**'de çalıştır.                  |
+| 14  | Vercel Hobby planı ticari olmayan kullanım içindir.                                                                                                                                                                                                  | Ticari kullanıma geçilirse plan değişmeli.                                  |
 
 ---
 
@@ -96,14 +97,14 @@ pnpm restore backups/kelimekart-prod-<tarih>.json --prod
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | PowerShell: `pnpm : File ... pnpm.ps1 cannot be loaded because running scripts is disabled` | Windows güvenlik ayarı. Ayarı değiştirmeden **`pnpm.cmd`** kullan: `pnpm.cmd user list --prod`       |
 | `Command "user" not found`                                                                  | Komut yanlış klasörde çalıştırıldı. Önce: `cd "C:\Users\tunab\Desktop\Duo Cards"`                    |
-| Girişte "Kullanıcı adı veya şifre hatalı."                                                  | Kullanıcı adını doğru yazdığından emin ol. Şifre unutulduysa: `pnpm user password ad --prod`         |
-| Girişte "Çok fazla deneme yapıldı"                                                          | Güvenlik için 5 dakika bekle.                                                                        |
+| Girişte "Wrong username or password."                                                       | Kullanıcı adını doğru yazdığından emin ol. Şifre unutulduysa: `pnpm user password ad --prod`         |
+| Girişte "Too many attempts"                                                                 | Güvenlik için 5 dakika bekle.                                                                        |
 | Hesap açarken "Grup dolu: en fazla 5 kişi"                                                  | 5 kişi sınırı. Biri silinmeden yeni hesap açılamaz (bölüm 2).                                        |
 | Hesap açarken "zaten var"                                                                   | O kullanıcı adı alınmış. Başka bir ad seç ya da şifresini yenile.                                    |
 | Site açılıyor ama her şey hata veriyor                                                      | Supabase projesi duraklatılmış olabilir (sınırlama 2) → **Restore project**.                         |
-| Çalış'ta yeni kart gelmiyor                                                                 | Günlük yeni kart sınırı dolmuş olabilir. **Ayarlar → Günlük yeni kart** sayısını artır.              |
-| Gün yanlış sayılıyor / seri bozuldu                                                         | **Ayarlar → Saat dilimi** doğru mu? Gün 04:00'te başlar.                                             |
-| "Dinle" ses çıkarmıyor                                                                      | Cihazda o dil için ses yok (sınırlama 6).                                                            |
+| Study'de yeni kart gelmiyor                                                                 | Günlük yeni kart sınırı dolmuş olabilir. **Settings → New cards per day** sayısını artır.            |
+| Gün yanlış sayılıyor / seri bozuldu                                                         | **Settings → Time zone** doğru mu? Gün 04:00'te başlar.                                              |
+| "Listen" ses çıkarmıyor                                                                     | Cihazda o dil için ses yok (sınırlama 6).                                                            |
 | `pnpm db:push` bağlanamıyor (`DbConnectError`)                                              | Ağ 5432 kapısını engelliyor olabilir (sınırlama 13) ya da `.env(.prod).local` içindeki şifre yanlış. |
 
 ---
@@ -167,4 +168,4 @@ Prod bilgileri `.env.prod.local` dosyasındadır. **Bu dosyanın adı asla `.env
 - [x] Tüm server action/route girdileri Zod ile doğrulanıyor
 - [x] Giriş denemelerinde Supabase hız sınırı açık (IP başına 5 dakikada 30)
 - [x] HTTPS (Vercel + HSTS), CSP, X-Frame-Options, Referrer-Policy, nosniff canlıda doğrulandı
-- [x] Hata mesajları iç ayrıntı sızdırmıyor (kullanıcıya genel Türkçe mesaj)
+- [x] Hata mesajları iç ayrıntı sızdırmıyor (kullanıcıya genel, sade mesaj)

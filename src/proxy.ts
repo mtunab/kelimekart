@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /** Giriş yapmadan açılabilen sayfalar. Geri kalan her şey korunur. */
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/yardim"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/help"];
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));

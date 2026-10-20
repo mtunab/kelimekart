@@ -50,14 +50,14 @@ describe("bozuk satırlar", () => {
     const { cards, errors } = parseImport("apple;elma\nyalnız\n;sadece anlam\npear;armut");
     expect(cards.map((c) => c.front)).toEqual(["apple", "pear"]);
     expect(errors).toEqual([
-      { line: 2, message: '"yalnız" için anlam yok.' },
-      { line: 3, message: "Ön yüz boş." },
+      { line: 2, message: '"yalnız" has no meaning.' },
+      { line: 3, message: "Word is empty." },
     ]);
   });
 
   it("çok uzun ön yüzü reddeder", () => {
     const { errors } = parseImport(`${"x".repeat(201)};uzun`);
-    expect(errors[0]?.message).toBe("Ön yüz çok uzun.");
+    expect(errors[0]?.message).toBe("Word is too long.");
   });
 
   it("boş girişte hiçbir şey döndürmez", () => {
@@ -149,6 +149,6 @@ describe("CSV dışa aktarma", () => {
 
   it("dosya adını Türkçe karakterlerden arındırır", () => {
     expect(csvFileName("Günlük İngilizce: Şehir")).toBe("kelimekart-gunluk-ingilizce-sehir.csv");
-    expect(csvFileName("???")).toBe("kelimekart-deste.csv");
+    expect(csvFileName("???")).toBe("kelimekart-deck.csv");
   });
 });

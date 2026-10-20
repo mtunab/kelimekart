@@ -4,8 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "KelimeKart",
     short_name: "KelimeKart",
-    description: "Arkadaş grubu için aralıklı tekrarlı kelime kartları",
-    lang: "tr",
+    description: "Spaced-repetition vocabulary cards for a group of friends",
+    lang: "en",
     dir: "ltr",
     start_url: "/",
     scope: "/",
@@ -20,6 +20,6 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
-    shortcuts: [{ name: "Çalış", short_name: "Çalış", url: "/study" }],
+    shortcuts: [{ name: "Study", short_name: "Study", url: "/study" }],
   };
 }

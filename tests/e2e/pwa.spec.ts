@@ -27,7 +27,7 @@ test.describe("PWA ve güvenlik başlıkları", () => {
 
     const offline = await request.get("/offline.html");
     expect(offline.ok()).toBe(true);
-    expect(await offline.text()).toContain("İnternet bağlantısı yok");
+    expect(await offline.text()).toContain("No internet connection");
   });
 
   test("güvenlik başlıkları her sayfada", async ({ request }) => {
@@ -52,7 +52,7 @@ test.describe("PWA ve güvenlik başlıkları", () => {
 
     test("Chrome uygulamayı kurulabilir buluyor, servis çalışanı devrede", async ({ page }) => {
       await login(page, user.username, user.password);
-      await expect(page.getByRole("heading", { name: "Merhaba, Pwa" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /^Hi, Pwa/ })).toBeVisible();
       await page.waitForFunction(async () =>
         Boolean(await navigator.serviceWorker.getRegistration()),
       );

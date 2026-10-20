@@ -20,10 +20,11 @@ export type Profile = {
  */
 export const requireUser = cache(async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // Oturumu yerelde doğrula (imza + süre); Supabase'e ek istek yok.
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) redirect("/login");
+  const user = { id: userId };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -32,7 +33,7 @@ export const requireUser = cache(async () => {
     )
     .eq("id", user.id)
     .single<Profile>();
-  if (!profile) redirect("/login?error=profil");
+  if (!profile) redirect("/login?error=profile");
 
   return { supabase, user, profile };
 });

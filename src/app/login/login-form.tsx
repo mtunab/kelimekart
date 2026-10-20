@@ -15,7 +15,7 @@ export function LoginForm({ next }: { next: string }) {
       <input type="hidden" name="next" value={next} />
       {state?.error ? <Alert>{state.error}</Alert> : null}
       <Field
-        label="Kullanıcı adı"
+        label="Username"
         id="username"
         type="text"
         autoComplete="username"
@@ -25,13 +25,19 @@ export function LoginForm({ next }: { next: string }) {
         required
         defaultValue={state?.values?.username}
       />
-      <Field label="Şifre" id="password" type="password" autoComplete="current-password" required />
-      <SubmitButton pendingText="Giriş yapılıyor…">Giriş yap</SubmitButton>
+      <Field
+        label="Password"
+        id="password"
+        type="password"
+        autoComplete="current-password"
+        required
+      />
+      <SubmitButton pendingText="Logging in…">Log in</SubmitButton>
       <Link
         href="/forgot-password"
         className="self-center rounded-md px-2 py-2 text-sm text-indigo-700 underline-offset-4 hover:underline dark:text-indigo-300"
       >
-        Şifremi unuttum
+        Forgot password?
       </Link>
     </form>
   );

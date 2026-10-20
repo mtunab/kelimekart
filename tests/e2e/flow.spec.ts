@@ -16,20 +16,22 @@ const WORDS = [
   ["juice", "meyve suyu"],
 ] as const;
 
+/** Desteler sekmesinden yeni deste açar; deste sayfasına gider. */
 async function createDeck(page: Page, name: string) {
-  await page.getByLabel("Deste adı").fill(name);
-  await page.getByRole("button", { name: "Deste oluştur" }).click();
+  await page.goto("/decks");
+  await page.getByLabel("Deck name").fill(name);
+  await page.getByRole("button", { name: "Create deck" }).click();
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 }
 
 async function quickAdd(page: Page, front: string, back: string) {
-  const frontInput = page.getByLabel("Kelime", { exact: true });
+  const frontInput = page.getByLabel("Word", { exact: true });
   await frontInput.fill(front);
   await frontInput.press("Enter"); // anlam boşken Enter → anlama geçer
-  await expect(page.getByLabel("Anlamı")).toBeFocused();
-  await page.getByLabel("Anlamı").fill(back);
-  await page.getByLabel("Anlamı").press("Enter");
-  await expect(page.getByRole("status").filter({ hasText: `Eklendi: ${front}` })).toBeVisible();
+  await expect(page.getByLabel("Meaning")).toBeFocused();
+  await page.getByLabel("Meaning").fill(back);
+  await page.getByLabel("Meaning").press("Enter");
+  await expect(page.getByRole("status").filter({ hasText: `Added: ${front}` })).toBeVisible();
   await expect(frontInput).toHaveValue("");
   await expect(frontInput).toBeFocused();
 }
@@ -48,26 +50,32 @@ test.describe("ana akış (masaüstü)", () => {
   test("giriş → deste → 10 kelime → içe aktar → çalış → dışa aktar → çıkış", async ({ page }) => {
     test.setTimeout(180_000);
     await login(page, user.username, user.password);
-    await expect(page.getByText("Henüz desten yok")).toBeVisible();
 
-    await createDeck(page, "E2E Destesi");
-    await expect(page.getByText("Henüz kelime yok")).toBeVisible();
+    // Ana sayfa = çalışma başlangıcı; deste yokken Desteler'e yönlendirir.
+    await expect(page.getByText("Create your first deck to start studying.")).toBeVisible();
+    await page.getByRole("link", { name: "Go to Decks" }).click();
+    await expect(page.getByText("No decks yet")).toBeVisible();
+
+    await createDeck(page, "E2E Deck");
+    await expect(page.getByText("No words yet")).toBeVisible();
 
     for (const [front, back] of WORDS) await quickAdd(page, front, back);
 
     // Aynı kelime: ezilmez, "zaten var" denir.
-    await page.getByLabel("Kelime", { exact: true }).fill("Apple");
-    await page.getByLabel("Anlamı").fill("başka anlam");
-    await page.getByLabel("Anlamı").press("Enter");
-    await expect(page.getByRole("status").filter({ hasText: "zaten var" })).toBeVisible();
+    await page.getByLabel("Word", { exact: true }).fill("Apple");
+    await page.getByLabel("Meaning").fill("başka anlam");
+    await page.getByLabel("Meaning").press("Enter");
+    await expect(
+      page.getByRole("status").filter({ hasText: "is already in this deck" }),
+    ).toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: /Kartlar/ })).toContainText("(10)");
+    await expect(page.getByRole("heading", { name: /^Cards/ })).toContainText("(10)");
 
     // CSV içe aktarma: 3 yeni, 1 destede var, 1 listede tekrar, 1 bozuk satır.
-    await page.getByRole("link", { name: "İçe aktar" }).click();
+    await page.getByRole("link", { name: "Import" }).click();
     await page
-      .getByLabel("Kelimeler")
+      .getByLabel("Words")
       .fill(
         [
           "word,meaning,example",
@@ -79,27 +87,27 @@ test.describe("ana akış (masaüstü)", () => {
           "yalnız",
         ].join("\n"),
       );
-    await page.getByRole("button", { name: "Önizle" }).click();
-    await expect(page.getByText("yeni kart eklenecek", { exact: false })).toContainText("3");
-    await expect(page.getByText("Destede zaten var")).toBeVisible();
-    await expect(page.getByText("Listede tekrar")).toBeVisible();
-    await expect(page.getByText(/Satır 7:/)).toBeVisible();
-    await page.getByRole("button", { name: "3 kartı ekle" }).click();
-    await expect(page.getByText("3 kart eklendi.")).toBeVisible();
-    await page.getByRole("link", { name: "Desteye dön" }).click();
-    await expect(page.getByRole("heading", { name: /Kartlar/ })).toContainText("(13)");
+    await page.getByRole("button", { name: "Preview" }).click();
+    await expect(page.getByText("will be added", { exact: false })).toContainText("3");
+    await expect(page.getByText("Already in deck")).toBeVisible();
+    await expect(page.getByText("Duplicate in list")).toBeVisible();
+    await expect(page.getByText(/Line 7:/)).toBeVisible();
+    await page.getByRole("button", { name: "Add 3 cards" }).click();
+    await expect(page.getByText("3 cards added.")).toBeVisible();
+    await page.getByRole("link", { name: "Back to deck" }).click();
+    await expect(page.getByRole("heading", { name: /^Cards/ })).toContainText("(13)");
 
     // Arama
-    await page.getByLabel("Kartlarda ara").fill("lamba");
-    await page.getByRole("button", { name: "Ara" }).click();
-    await expect(page.getByRole("heading", { name: /Kartlar/ })).toContainText("(1)");
+    await page.getByLabel("Search cards").fill("lamba");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(page.getByRole("heading", { name: /^Cards/ })).toContainText("(1)");
     await expect(page.getByText("lamp, desk")).toBeVisible();
 
     // Dışa aktarma
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("link", { name: "CSV indir" }).click();
+    await page.getByRole("link", { name: "Download CSV" }).click();
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe("kelimekart-e2e-destesi.csv");
+    expect(download.suggestedFilename()).toBe("kelimekart-e2e-deck.csv");
     const csv = readFileSync((await download.path())!, "utf8");
     expect(csv).toContain("front,back,example,note,tags");
     expect(csv).toContain('"lamp, desk",masa lambası');
@@ -107,51 +115,55 @@ test.describe("ana akış (masaüstü)", () => {
 
     // Çalışma: günlük yeni limit 10 → 10 kart. Klavyeyle: Boşluk = çevir, 4 = Kolay.
     await page
-      .getByRole("navigation", { name: "Deste işlemleri" })
-      .getByRole("link", { name: "Çalış" })
+      .getByRole("navigation", { name: "Deck actions" })
+      .getByRole("link", { name: "Study" })
       .click();
     await expect(page.getByTestId("study-card")).toBeVisible();
-    await expect(page.getByText("10 yeni")).toBeVisible();
+    await expect(page.getByText("10 new")).toBeVisible();
 
     // İlk cevabı geri al: kart geri gelir.
     const firstFront = await page.getByTestId("study-card").locator("p").first().innerText();
     await page.keyboard.press("Space");
-    await expect(page.getByRole("button", { name: /Kolay/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Easy/ })).toBeVisible();
     await page.keyboard.press("4");
-    await expect(page.getByText("9 yeni")).toBeVisible();
+    await expect(page.getByText("9 new")).toBeVisible();
     await page.keyboard.press("z");
-    await expect(page.getByText(`Geri alındı: ${firstFront}`)).toBeVisible();
+    await expect(page.getByText(`Undone: ${firstFront}`)).toBeVisible();
     await expect(page.getByTestId("study-card").locator("p").first()).toHaveText(firstFront);
 
     for (let i = 0; i < 10; i++) {
       await expect(page.getByTestId("study-card")).toBeVisible();
       await page.keyboard.press("Space");
-      await expect(page.getByRole("button", { name: /Kolay/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Easy/ })).toBeVisible();
       await page.keyboard.press("4");
     }
-    await expect(page.getByRole("heading", { name: /Bugünlük bu kadar/ })).toBeVisible();
-    await expect(page.getByText("%100")).toBeVisible();
-    await expect(page.getByText(/1 günlük seri/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Session complete!" })).toBeVisible();
+    await expect(page.getByText("100%")).toBeVisible();
+    await expect(page.getByText(/1-day streak/)).toBeVisible();
 
-    // Ana sayfa: kalan 3 yeni kart görünür.
-    await page.getByRole("link", { name: "Tamam" }).click();
+    // Ana sayfa: bugünkü yeni kart hakkı bitti → "All caught up"; Desteler'de 3 yeni kart kaldı.
+    // Desteden başlanan oturumda "Done" desteye döner.
+    await page.getByRole("link", { name: "Done" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "E2E Deck" })).toBeVisible();
     await page.goto("/");
-    await expect(page.getByText("3 yeni")).toBeVisible();
+    await expect(page.getByText("All caught up!")).toBeVisible();
+    await page.goto("/decks");
+    await expect(page.getByText("3 new")).toBeVisible();
 
     // İstatistik güncellendi: 10 tekrar (geri alınan sayılmaz), %100, 1 günlük seri, panoda Selin.
     await page.goto("/stats");
-    const today = page.locator("dl > div").filter({ hasText: "Bugün" });
+    const today = page.locator("dl > div").filter({ hasText: "Today" });
     await expect(today.locator("dd").first()).toHaveText("10");
     await expect(
-      page.locator("dl > div").filter({ hasText: "Doğruluk" }).locator("dd").first(),
-    ).toHaveText("%100");
+      page.locator("dl > div").filter({ hasText: "Accuracy" }).locator("dd").first(),
+    ).toHaveText("100%");
     await expect(
-      page.locator("dl > div").filter({ hasText: "Seri" }).locator("dd").first(),
-    ).toHaveText("1 gün");
-    await expect(page.getByRole("listitem").filter({ hasText: "Selin (sen)" })).toContainText(
-      "10 tekrar",
+      page.locator("dl > div").filter({ hasText: "Streak" }).locator("dd").first(),
+    ).toHaveText("1 day");
+    await expect(page.getByRole("listitem").filter({ hasText: "Selin (you)" })).toContainText(
+      "10 reviews",
     );
-    const deckRow = page.getByRole("row").filter({ hasText: "E2E Destesi" });
+    const deckRow = page.getByRole("row").filter({ hasText: "E2E Deck" });
     await expect(deckRow.getByRole("cell").nth(1)).toHaveText("3"); // yeni
 
     await logout(page);
@@ -169,10 +181,13 @@ test.describe("kısa akış (mobil 390px)", () => {
     await deleteTestUsers([user]);
   });
 
-  test("giriş → deste → 3 kelime → dokunarak çevir ve kaydırarak cevapla", async ({ page }) => {
+  test("giriş → deste → 3 kelime → başlangıç ekranı → dokunarak çevir, kaydırarak cevapla", async ({
+    page,
+  }) => {
     test.setTimeout(120_000);
     await login(page, user.username, user.password);
-    await createDeck(page, "Mobil deste");
+    await expect(page.getByRole("heading", { name: /^Hi, Mert/ })).toBeVisible();
+    await createDeck(page, "Mobile deck");
     for (const [front, back] of WORDS.slice(0, 3)) await quickAdd(page, front, back);
 
     // Yatay kaydırma çubuğu yok.
@@ -181,15 +196,19 @@ test.describe("kısa akış (mobil 390px)", () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
 
+    // Alt menüden Study → başlangıç ekranı → Start studying.
     await page
-      .getByRole("navigation", { name: "Deste işlemleri" })
-      .getByRole("link", { name: "Çalış" })
+      .getByRole("navigation", { name: "Bottom" })
+      .getByRole("link", { name: "Study" })
       .click();
+    await expect(page.getByRole("heading", { name: /^Hi, Mert/ })).toBeVisible();
+    await page.getByRole("link", { name: /Start studying/ }).click();
+
     const card = page.getByTestId("study-card");
     for (let i = 0; i < 3; i++) {
       await expect(card).toBeVisible();
       await card.click(); // dokun = çevir
-      await expect(page.getByRole("button", { name: /İyi/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Good/ })).toBeVisible();
       const box = (await card.boundingBox())!;
       const y = box.y + box.height / 2;
       const x = box.x + box.width / 2;
@@ -200,9 +219,9 @@ test.describe("kısa akış (mobil 390px)", () => {
       await page.mouse.move(x + dx, y, { steps: 5 });
       await page.mouse.up();
       // Yeni kart (Tekrar da İyi de) öğrenme adımına girer ve dakikalar içinde yine gelir:
-      // her kaydırmada "yeni" bir azalır, "tekrar" bir artar.
-      await expect(page.getByText(`${i + 1} tekrar`)).toBeVisible();
-      await expect(page.getByText(`${2 - i} yeni`)).toBeVisible();
+      // her kaydırmada "yeni" bir azalır, "vadesi gelen" bir artar.
+      await expect(page.getByText(`${i + 1} due`, { exact: true })).toBeVisible();
+      await expect(page.getByText(`${2 - i} new`, { exact: true })).toBeVisible();
     }
 
     await logout(page);
