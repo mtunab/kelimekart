@@ -22,7 +22,9 @@
     "db:seed": "tsx scripts/db.ts seed",
     "check:staged": "tsx scripts/check-staged-secrets.mts",
     "icons": "tsx scripts/generate-icons.mts",
-    "lighthouse": "tsx scripts/lighthouse.mts"
+    "lighthouse": "tsx scripts/lighthouse.mts",
+    "backup": "tsx scripts/backup.ts",
+    "restore": "tsx scripts/restore.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -54,4 +54,44 @@ Lighthouse (mobil, `pnpm build && pnpm lighthouse`, 2026-10-20):
 
 PWA: Chrome'un kurulabilirlik denetimi hatasız (e2e testinde doğrulanıyor).
 
-_Diğer bölümler (kullanım, yedekleme, yayın) sonraki aşamalarda eklenecek._
+## Canlı site
+
+- Adres: **https://kelimekart-five.vercel.app** (Vercel, `main` dalına her gönderimde kendini günceller)
+- Veritabanı: Supabase `kelimekart-prod`. Vercel'de yalnızca 3 açık değişken var:
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SITE_URL` (Production). Gizli anahtar Vercel'de **yok**.
+- Prod bilgileri bilgisayarda `.env.prod.local` dosyasında (GitHub'a gitmez).
+- Yeni bir migration prod'a: `pnpm db:push -- --prod` ("prod" yazarak onaylanır).
+  Ağın veritabanı kapısını (5432) engellediği durumda: migration dosyasını Supabase → SQL Editor'de çalıştır.
+
+## Yedekleme (haftada bir)
+
+```bash
+pnpm backup --prod
+```
+
+`backups/kelimekart-prod-<tarih>.json` dosyası oluşur (sadece okur, hiçbir şeyi değiştirmez).
+Bu dosya kişisel veri içerir: GitHub'a gitmez; kendi bulut sürücüne (Google Drive vb.) kopyala.
+Öneri: her pazar bir kez çalıştır, son 8 haftanın dosyalarını sakla.
+
+**Geri yükleme** (bir şey ters giderse):
+
+```bash
+pnpm restore backups/kelimekart-prod-<tarih>.json --prod
+```
+
+"geri yükle" yazarak onaylanır. Yedekteki satırlar geri gelir/güncellenir; yedekte olmayan yeni satırlar silinmez.
+Hesaplar (şifreler) yedekte yoktur: silinmiş bir kişinin verisi için önce `pnpm invite ... --prod` ile kişiyi yeniden ekle.
+Geri yükleme otomatik testle denendi (`tests/security/backup.test.ts`: yedek al → desteyi sil → geri yükle → her şey geri geldi).
+
+## Güvenlik kontrol listesi (2026-10-20)
+
+- [x] Tüm tablolarda RLS açık, güvenlik testleri yeşil (dev'de 71 güvenlik testi; prod'da girişsiz okuma her tabloda engelli)
+- [x] Herkese açık kayıt kapalı (dev ve prod; prod'da sunucu ayarından doğrulandı: `disable_signup: true`)
+- [x] Gizli anahtar istemci paketinde yok (`pnpm verify` her derlemede `.next/static` tarar)
+- [x] `.env*` dosyaları `.gitignore`'da; tüm git geçmişi tarandı, gizli anahtar/şifre yok
+- [x] Tüm server action/route girdileri Zod ile doğrulanıyor
+- [x] Giriş denemelerinde Supabase hız sınırı açık (IP başına 5 dakikada 30)
+- [x] HTTPS (Vercel + HSTS), CSP, X-Frame-Options, Referrer-Policy, nosniff canlıda doğrulandı
+- [x] Hata mesajları iç ayrıntı sızdırmıyor (kullanıcıya genel Türkçe mesaj)
+
+_Kullanım kılavuzu ve sorun giderme Aşama 8'de eklenecek._

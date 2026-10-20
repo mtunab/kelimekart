@@ -53,3 +53,6 @@ next-env.d.ts
 
 # Lighthouse ölçüm çıktıları
 /lighthouse-results/
+
+# Yedekler (kişisel veri içerir, GitHub'a gitmez)
+/backups/
