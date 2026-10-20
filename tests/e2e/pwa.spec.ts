@@ -51,7 +51,7 @@ test.describe("PWA ve güvenlik başlıkları", () => {
     });
 
     test("Chrome uygulamayı kurulabilir buluyor, servis çalışanı devrede", async ({ page }) => {
-      await login(page, user.email, user.password);
+      await login(page, user.username, user.password);
       await expect(page.getByRole("heading", { name: "Merhaba, Pwa" })).toBeVisible();
       await page.waitForFunction(async () =>
         Boolean(await navigator.serviceWorker.getRegistration()),

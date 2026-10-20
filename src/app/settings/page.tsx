@@ -11,7 +11,7 @@ import { PasswordForm, ProfileForm } from "./forms";
 export const metadata: Metadata = { title: "Ayarlar · KelimeKart" };
 
 export default async function SettingsPage() {
-  const [{ profile, user }, cookieStore] = await Promise.all([requireUser(), cookies()]);
+  const [{ profile }, cookieStore] = await Promise.all([requireUser(), cookies()]);
   const theme = parseTheme(cookieStore.get(THEME_COOKIE)?.value);
   const zones = Intl.supportedValuesOf("timeZone");
   if (!zones.includes(profile.timezone)) zones.unshift(profile.timezone);
@@ -65,7 +65,9 @@ export default async function SettingsPage() {
         <h2 id="sifre" className="mb-1 text-lg font-semibold">
           Şifre değiştir
         </h2>
-        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{user.email}</p>
+        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+          Kullanıcı adın: <strong>{profile.username}</strong>
+        </p>
         <PasswordForm />
       </section>
     </PageShell>

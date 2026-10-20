@@ -23,9 +23,13 @@ export default function HelpPage() {
 
       <Section title="1. İlk giriş">
         <ol className="list-decimal space-y-1 pl-5">
-          <li>Grup yöneticisinin gönderdiği bağlantıyı aç (1 saat geçerli, tek kullanımlık).</li>
           <li>
-            Kendine bir şifre belirle (en az 8 karakter). Sonraki girişlerde e-postan ve bu şifre.
+            Grup yöneticisi sana bir <strong>kullanıcı adı</strong> ve <strong>şifre</strong> verir.
+            Siteye gir ve bunlarla giriş yap.
+          </li>
+          <li>
+            İstersen <em>Ayarlar → Şifre değiştir</em>&apos;den kendi şifreni koy (en az 8
+            karakter). Hesabın kalıcıdır; sadece yönetici silebilir.
           </li>
           <li>
             <strong>Telefonuna uygulama gibi ekle:</strong> iPhone (Safari) → Paylaş →{" "}
@@ -127,7 +131,7 @@ export default function HelpPage() {
 
       <Section title="5. Sorun olursa">
         <ul className="list-disc space-y-1 pl-5">
-          <li>Şifremi unuttum / bağlantı geçersiz: grup yöneticisinden yeni bağlantı iste.</li>
+          <li>Şifremi unuttum: grup yöneticisine söyle, sana yeni şifre verir.</li>
           <li>&quot;Çok fazla deneme yapıldı&quot;: 5 dakika bekle.</li>
           <li>
             Yeni kart gelmiyor: günün yeni kart sayısı dolmuş; Ayarlar&apos;dan artırabilirsin.

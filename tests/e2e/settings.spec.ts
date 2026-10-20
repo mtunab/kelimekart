@@ -15,7 +15,7 @@ test.describe("ayarlar", () => {
 
   test("ad, hedef, tema ve şifre değişir", async ({ page }) => {
     test.setTimeout(120_000);
-    await login(page, user.email, user.password);
+    await login(page, user.username, user.password);
     await page.getByRole("link", { name: "Ayarlar" }).first().click();
     await expect(page.getByRole("heading", { level: 1, name: "Ayarlar" })).toBeVisible();
 
@@ -51,7 +51,7 @@ test.describe("ayarlar", () => {
     await page.getByRole("button", { name: "Şifreyi değiştir" }).click();
     await expect(page.getByText("Şifren değişti.")).toBeVisible();
     await logout(page);
-    await login(page, user.email, newPassword);
+    await login(page, user.username, newPassword);
     await expect(page.getByRole("heading", { name: "Merhaba, Ayar Yeni" })).toBeVisible();
   });
 });

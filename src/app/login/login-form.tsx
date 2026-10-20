@@ -15,13 +15,15 @@ export function LoginForm({ next }: { next: string }) {
       <input type="hidden" name="next" value={next} />
       {state?.error ? <Alert>{state.error}</Alert> : null}
       <Field
-        label="E-posta"
-        id="email"
-        type="email"
-        autoComplete="email"
-        inputMode="email"
+        label="Kullanıcı adı"
+        id="username"
+        type="text"
+        autoComplete="username"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         required
-        defaultValue={state?.values?.email}
+        defaultValue={state?.values?.username}
       />
       <Field label="Şifre" id="password" type="password" autoComplete="current-password" required />
       <SubmitButton pendingText="Giriş yapılıyor…">Giriş yap</SubmitButton>

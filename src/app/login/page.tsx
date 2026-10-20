@@ -8,7 +8,6 @@ import { LoginForm } from "./login-form";
 export const metadata: Metadata = { title: "Giriş · KelimeKart" };
 
 const notices: Record<string, { tone: "error" | "success"; text: string }> = {
-  link: { tone: "error", text: "Bağlantı geçersiz ya da süresi dolmuş. Yeni bir bağlantı iste." },
   profil: { tone: "error", text: "Hesabın bulunamadı. Grup yöneticisiyle konuş." },
   cikis: { tone: "success", text: "Çıkış yaptın." },
 };

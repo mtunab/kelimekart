@@ -38,6 +38,26 @@ describe.skipIf(!hasDevEnv)("profiller (RLS)", () => {
     });
   });
 
+  it("kullanıcı adı yönetici komutundan gelir, tekildir ve kullanıcı değiştiremez", async () => {
+    const { data } = await a.client.from("profiles").select("username").eq("id", a.id).single();
+    expect(data?.username).toBe(a.username);
+
+    const change = await a.client.from("profiles").update({ username: "baskasi" }).eq("id", a.id);
+    expect(change.error).not.toBeNull();
+
+    const dup = await serviceClient()
+      .from("profiles")
+      .update({ username: b.username })
+      .eq("id", a.id);
+    expect(dup.error?.code).toBe("23505");
+
+    const bad = await serviceClient()
+      .from("profiles")
+      .update({ username: "Kötü Ad" })
+      .eq("id", a.id);
+    expect(bad.error).not.toBeNull();
+  });
+
   it("A, B'nin profilini okuyamaz", async () => {
     const { data } = await a.client.from("profiles").select("id").eq("id", b.id);
     expect(data).toEqual([]);

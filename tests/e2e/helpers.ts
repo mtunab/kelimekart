@@ -1,8 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
-export async function login(page: Page, email: string, password: string) {
+export async function login(page: Page, username: string, password: string) {
   await page.goto("/login");
-  await page.getByLabel("E-posta").fill(email);
+  await page.getByLabel("Kullanıcı adı").fill(username);
   await page.getByLabel("Şifre", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Giriş yap" }).click();
 }

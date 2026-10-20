@@ -47,7 +47,7 @@ test.describe("ana akış (masaüstü)", () => {
 
   test("giriş → deste → 10 kelime → içe aktar → çalış → dışa aktar → çıkış", async ({ page }) => {
     test.setTimeout(180_000);
-    await login(page, user.email, user.password);
+    await login(page, user.username, user.password);
     await expect(page.getByText("Henüz desten yok")).toBeVisible();
 
     await createDeck(page, "E2E Destesi");
@@ -171,7 +171,7 @@ test.describe("kısa akış (mobil 390px)", () => {
 
   test("giriş → deste → 3 kelime → dokunarak çevir ve kaydırarak cevapla", async ({ page }) => {
     test.setTimeout(120_000);
-    await login(page, user.email, user.password);
+    await login(page, user.username, user.password);
     await createDeck(page, "Mobil deste");
     for (const [front, back] of WORDS.slice(0, 3)) await quickAdd(page, front, back);
 

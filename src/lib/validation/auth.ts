@@ -1,13 +1,20 @@
 import { z } from "zod";
-
-export const emailSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .pipe(z.email({ error: "Geçerli bir e-posta adresi yaz." }));
+import { loginIdentifierToEmail } from "@/lib/username";
 
 export const loginSchema = z.object({
-  email: emailSchema,
+  identifier: z
+    .string()
+    .trim()
+    .min(1, { error: "Kullanıcı adını yaz." })
+    .max(200)
+    .transform((value, ctx) => {
+      const email = loginIdentifierToEmail(value);
+      if (!email) {
+        ctx.addIssue({ code: "custom", message: "Kullanıcı adı veya şifre hatalı." });
+        return z.NEVER;
+      }
+      return email;
+    }),
   password: z.string().min(1, { error: "Şifreni yaz." }).max(200),
 });
 

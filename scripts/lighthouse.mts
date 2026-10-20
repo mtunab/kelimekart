@@ -41,7 +41,8 @@ const server = spawn("pnpm", ["start", "--port", String(PORT)], {
   env: { ...process.env, NODE_OPTIONS: "--require ./scripts/flaky-network.cjs" },
 });
 
-const email = `kk-test-lighthouse-${crypto.randomUUID().slice(0, 8)}@example.com`;
+const username = `kk-test-${crypto.randomUUID().slice(0, 8)}`;
+const email = `${username}@users.kelimekart.invalid`;
 const password = `Kk-${crypto.randomUUID()}`;
 let userId: string | undefined;
 
@@ -51,7 +52,7 @@ try {
     email,
     password,
     email_confirm: true,
-    user_metadata: { display_name: "Ölçüm" },
+    user_metadata: { username, display_name: "Ölçüm" },
   });
   if (created.error || !created.data.user) {
     throw new Error(`Ölçüm kullanıcısı oluşturulamadı: ${created.error?.message}`);
@@ -62,7 +63,7 @@ try {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(`${BASE}/login`);
-  await page.getByLabel("E-posta").fill(email);
+  await page.getByLabel("Kullanıcı adı").fill(username);
   await page.getByLabel("Şifre", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Giriş yap" }).click();
   await page.waitForURL(`${BASE}/`);

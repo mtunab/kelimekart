@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Profile = {
   id: string;
+  username: string;
   display_name: string;
   timezone: string;
   daily_new_limit: number;
@@ -27,7 +28,7 @@ export const requireUser = cache(async () => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, display_name, timezone, daily_new_limit, daily_goal_reviews, streak_count, streak_last_day",
+      "id, username, display_name, timezone, daily_new_limit, daily_goal_reviews, streak_count, streak_last_day",
     )
     .eq("id", user.id)
     .single<Profile>();

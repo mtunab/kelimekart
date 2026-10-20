@@ -18,13 +18,13 @@
     "db:push": "tsx scripts/db.ts push",
     "db:status": "tsx scripts/db.ts status",
     "check:bundle": "tsx scripts/check-bundle.ts",
-    "invite": "tsx scripts/invite-user.ts",
     "db:seed": "tsx scripts/db.ts seed",
     "check:staged": "tsx scripts/check-staged-secrets.mts",
     "icons": "tsx scripts/generate-icons.mts",
     "lighthouse": "tsx scripts/lighthouse.mts",
     "backup": "tsx scripts/backup.ts",
-    "restore": "tsx scripts/restore.ts"
+    "restore": "tsx scripts/restore.ts",
+    "user": "tsx scripts/user.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

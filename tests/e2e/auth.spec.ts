@@ -1,12 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { buildSetPasswordLink } from "../../scripts/lib/invite";
-import {
-  createAuthUser,
-  deleteTestUsers,
-  serviceClient,
-  testEmail,
-  type AuthUser,
-} from "../security/helpers";
+import { createAuthUser, deleteTestUsers, serviceClient, type AuthUser } from "../security/helpers";
 import { login, logout } from "./helpers";
 
 test.describe("giriş", () => {
@@ -23,18 +16,18 @@ test.describe("giriş", () => {
   test("giriş yapmadan ana sayfa açılmaz, giriş sayfasına gider", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/login$/);
-    await page.goto("/reset-password");
-    await expect(page).toHaveURL(/\/login\?next=%2Freset-password$/);
+    await page.goto("/settings");
+    await expect(page).toHaveURL(/\/login\?next=%2Fsettings$/);
   });
 
   test("yanlış şifre anlaşılır hata verir", async ({ page }) => {
-    await login(page, user.email, "yanlis-sifre-123");
-    await expect(page.getByText("E-posta veya şifre hatalı.")).toBeVisible();
-    await expect(page.getByLabel("E-posta")).toHaveValue(user.email);
+    await login(page, user.username, "yanlis-sifre-123");
+    await expect(page.getByText("Kullanıcı adı veya şifre hatalı.")).toBeVisible();
+    await expect(page.getByLabel("Kullanıcı adı")).toHaveValue(user.username);
   });
 
-  test("giriş → ana sayfa → çıkış", async ({ page }) => {
-    await login(page, user.email, user.password);
+  test("kullanıcı adıyla giriş (büyük harfle yazsa da) → ana sayfa → çıkış", async ({ page }) => {
+    await login(page, user.username.toUpperCase(), user.password);
     await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
 
     await page.goto("/login");
@@ -46,62 +39,33 @@ test.describe("giriş", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("şifremi unuttum: kayıtlı olup olmadığını belli etmez", async ({ page }) => {
+  test("ayarlarda kullanıcı adı görünür", async ({ page }) => {
+    await login(page, user.username, user.password);
+    await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
+    await page.goto("/settings");
+    await expect(page.getByText(`Kullanıcı adın: ${user.username}`)).toBeVisible();
+  });
+
+  test("şifremi unuttum: yöneticiye başvurmayı anlatır", async ({ page }) => {
     await page.goto("/login");
     await page.getByRole("link", { name: "Şifremi unuttum" }).click();
     await expect(page.getByRole("heading", { name: "Şifremi unuttum" })).toBeVisible();
-    await page.getByLabel("E-posta").fill(testEmail("yok"));
-    await page.getByRole("button", { name: "Sıfırlama bağlantısı gönder" }).click();
-    await expect(page.getByText(/Bu adres kayıtlıysa/)).toBeVisible();
+    await expect(page.getByText(/grup yöneticisi açar/)).toBeVisible();
+    await page.getByRole("link", { name: "Girişe dön" }).click();
+    await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("bozuk bağlantı giriş sayfasında uyarı gösterir", async ({ page }) => {
-    await page.goto("/auth/confirm?token_hash=bozuk&type=recovery&next=/reset-password");
-    await expect(page).toHaveURL(/\/login\?error=link$/);
-    await expect(page.getByText(/Bağlantı geçersiz/)).toBeVisible();
-  });
-});
-
-test.describe("davet bağlantısı", () => {
-  let invited: AuthUser;
-
-  test.beforeAll(async () => {
-    invited = await createAuthUser("e2e", "Ece");
-  });
-
-  test.afterAll(async () => {
-    await deleteTestUsers([invited]);
-  });
-
-  test("bağlantıyla şifre belirlenir ve yeni şifreyle girilir", async ({ page, baseURL }) => {
-    const { data, error } = await serviceClient().auth.admin.generateLink({
-      type: "recovery",
-      email: invited.email,
+  test("yönetici şifreyi yenileyince eski şifre çalışmaz, yenisi çalışır", async ({ page }) => {
+    const newPassword = `Yeni-${crypto.randomUUID().slice(0, 12)}`;
+    const { error } = await serviceClient().auth.admin.updateUserById(user.id, {
+      password: newPassword,
     });
     expect(error).toBeNull();
-    const link = buildSetPasswordLink(baseURL!, data.properties!.hashed_token);
 
-    await page.goto(link);
-    await expect(page).toHaveURL(/\/reset-password$/);
-
-    await page.getByLabel("Yeni şifre", { exact: true }).fill("kisa");
-    await page.getByLabel("Yeni şifre (tekrar)").fill("kisa");
-    await page.getByRole("button", { name: "Şifreyi kaydet" }).click();
-    await expect(page.getByText(/en az 8 karakter olmalı/)).toBeVisible();
-
-    const newPassword = `Yeni-${crypto.randomUUID().slice(0, 12)}`;
-    await page.getByLabel("Yeni şifre", { exact: true }).fill(newPassword);
-    await page.getByLabel("Yeni şifre (tekrar)").fill(newPassword);
-    await page.getByRole("button", { name: "Şifreyi kaydet" }).click();
-    await expect(page.getByText("Şifren kaydedildi.")).toBeVisible();
-
-    await logout(page);
-    await login(page, invited.email, newPassword);
-    await expect(page.getByRole("heading", { name: "Merhaba, Ece" })).toBeVisible();
-
-    // Aynı bağlantı ikinci kez kullanılamaz.
-    await logout(page);
-    await page.goto(link);
-    await expect(page).toHaveURL(/\/login\?error=link$/);
+    await login(page, user.username, user.password);
+    await expect(page.getByText("Kullanıcı adı veya şifre hatalı.")).toBeVisible();
+    await login(page, user.username, newPassword);
+    await expect(page.getByRole("heading", { name: "Merhaba, Deniz" })).toBeVisible();
+    user.password = newPassword;
   });
 });

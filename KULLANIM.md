@@ -5,8 +5,8 @@ Adres: **https://kelimekart-five.vercel.app** · Bu kılavuz uygulamada da var: 
 
 ## 1. İlk giriş
 
-1. Grup yöneticisinin gönderdiği bağlantıyı aç (1 saat geçerli, tek kullanımlık).
-2. Kendine bir şifre belirle (en az 8 karakter). Sonraki girişlerde e-postan + bu şifre.
+1. Grup yöneticisi sana bir **kullanıcı adı** ve **şifre** verir. Siteye gir ve bunlarla giriş yap.
+2. İstersen **Ayarlar → Şifre değiştir**'den kendi şifreni koy (en az 8 karakter). Hesabın kalıcıdır; sadece yönetici silebilir.
 3. **Telefonuna uygulama gibi ekle:** iPhone (Safari) → Paylaş → **Ana Ekrana Ekle**.
    Android (Chrome) → ⋮ menü → **Uygulamayı yükle** / **Ana ekrana ekle**.
 
@@ -46,7 +46,7 @@ Adres: **https://kelimekart-five.vercel.app** · Bu kılavuz uygulamada da var: 
 
 ## 5. Sorun olursa
 
-- **Şifremi unuttum / bağlantı geçersiz:** grup yöneticisinden yeni bağlantı iste.
+- **Şifremi unuttum:** grup yöneticisine söyle, sana yeni şifre verir.
 - **"Çok fazla deneme yapıldı":** 5 dakika bekle.
 - **Yeni kart gelmiyor:** günün yeni kart sayısı dolmuş; **Ayarlar**'dan artırabilirsin.
 - **"Dinle" ses çıkarmıyor:** cihazında o dilin sesi yok.

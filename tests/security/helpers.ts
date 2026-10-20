@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { parse } from "dotenv";
+import { usernameToEmail } from "@/lib/username";
 
 export const devUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 export const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -33,6 +34,7 @@ export function serviceClient() {
 
 export type TestUser = {
   id: string;
+  username: string;
   email: string;
   password: string;
   client: SupabaseClient;
@@ -72,22 +74,26 @@ export async function withRetry<T>(fn: () => PromiseLike<T>, attempts = 4): Prom
   return last as T;
 }
 
-export type AuthUser = { id: string; email: string; password: string };
+export type AuthUser = { id: string; username: string; email: string; password: string };
 
-/** Dev'de şifresi bilinen, e-postası onaylı geçici kullanıcı oluşturur. */
-export async function createAuthUser(tag: string, displayName = `Test ${tag}`): Promise<AuthUser> {
-  const email = testEmail(tag);
+/**
+ * Dev'de kullanıcı adı + şifreli geçici kullanıcı oluşturur (yönetici komutunun yaptığı gibi).
+ * Kullanıcı adı "kk-test-" ile başlar; iç e-postası da öyle olduğu için temizlik onu bulur.
+ */
+export async function createAuthUser(_tag: string, displayName = "Test"): Promise<AuthUser> {
+  const username = `${TEST_EMAIL_PREFIX}${crypto.randomUUID().slice(0, 8)}`;
+  const email = usernameToEmail(username);
   const password = `Kk-${crypto.randomUUID()}`;
   const { data, error } = await withRetry(() =>
     serviceClient().auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { display_name: displayName },
+      user_metadata: { username, display_name: displayName },
     }),
   );
   if (error || !data.user) throw new Error(`Test kullanıcısı oluşturulamadı: ${error?.message}`);
-  return { id: data.user.id, email, password };
+  return { id: data.user.id, username, email, password };
 }
 
 /** Geçici kullanıcı oluşturur ve onun adına giriş yapmış bir istemci döndürür. */
