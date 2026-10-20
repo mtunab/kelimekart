@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bağlantı yok · KelimeKart</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: #fff;
+        color: #171717;
+        text-align: center;
+        padding: 1.5rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0a0a0a;
+          color: #ededed;
+        }
+      }
+      button {
+        margin-top: 1rem;
+        min-height: 44px;
+        padding: 0 1.25rem;
+        border: 0;
+        border-radius: 0.75rem;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" width="72" height="72" />
+      <h1>İnternet bağlantısı yok</h1>
+      <p>Bağlantın gelince kaldığın yerden devam edebilirsin.</p>
+      <button type="button" onclick="location.reload()">Tekrar dene</button>
+    </main>
+  </body>
+</html>

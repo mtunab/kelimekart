@@ -52,7 +52,7 @@ export function BarChart({
         />
       </svg>
       <div
-        className="grid text-center text-[10px] text-zinc-500"
+        className="grid text-center text-[10px] text-zinc-500 dark:text-zinc-400"
         style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}
         aria-hidden="true"
       >

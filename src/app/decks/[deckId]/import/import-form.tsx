@@ -205,7 +205,9 @@ export function ImportForm({ deckId }: { deckId: string }) {
               </tbody>
             </table>
             {preview.cards.length > 300 ? (
-              <p className="p-2 text-sm text-zinc-500">İlk 300 satır gösteriliyor.</p>
+              <p className="p-2 text-sm text-zinc-500 dark:text-zinc-400">
+                İlk 300 satır gösteriliyor.
+              </p>
             ) : null}
           </div>
 

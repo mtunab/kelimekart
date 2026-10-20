@@ -20,7 +20,9 @@
     "check:bundle": "tsx scripts/check-bundle.ts",
     "invite": "tsx scripts/invite-user.ts",
     "db:seed": "tsx scripts/db.ts seed",
-    "check:staged": "tsx scripts/check-staged-secrets.mts"
+    "check:staged": "tsx scripts/check-staged-secrets.mts",
+    "icons": "tsx scripts/generate-icons.mts",
+    "lighthouse": "tsx scripts/lighthouse.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

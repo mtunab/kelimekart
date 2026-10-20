@@ -320,4 +320,7 @@ Verdiğin her önemli teknik kararı (ör. undo yöntemi, FSRS ayarları, ek pak
 | 2026-10-19 | Grafikler bağımlılıksız SVG (`components/bar-chart.tsx`), ekran okuyucu için gizli tablo | "Ağır kütüphane ekleme" kuralı. |
 | 2026-10-19 | Tema çerezde (`kk-theme`: system/light/dark); "sistem" için sayfa çizilmeden önce çalışan küçük satır içi betik; Tailwind `dark` sınıf tabanlı | Açık/koyu yanıp sönme olmasın; sunucu tema bilgisini ilk HTML'e koyabilsin. |
 | 2026-10-19 | Telefonda alt menü (4 sekme), masaüstünde üst menü; mobilde `scroll-padding-bottom` | Tek elle kullanım; sabit menü düğmeleri örtmesin (e2e yakaladı). |
+| 2026-10-20 | PWA: `app/manifest.ts` + PNG ikonlar (`pnpm icons`, Playwright Chromium ile SVG'den, yeni paket yok) + `public/sw.js` yalnızca statik dosyaları önbelleğe alır, sayfalar her zaman ağdan, ağ yoksa `offline.html` | Kişiye özel veri asla önbellekte kalmasın; kurulabilirlik için yeterli. |
+| 2026-10-20 | Güvenlik başlıkları `next.config.ts`: temel CSP (`script-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, canlıda HSTS | 7.4 maddesi; Next.js'in sayfa içi başlangıç betikleri için 'unsafe-inline' gerekli. |
+| 2026-10-20 | Lighthouse projeye eklenmedi; `pnpm lighthouse` betiği `pnpm dlx lighthouse@12.6.1` ile çalıştırır | Gereksiz bağımlılık olmasın. |
 | 2026-10-19 | Güvenlik testleri Vitest içinde `tests/security/` altında, dosyalar sırayla çalışır | Aynı dev veritabanını paylaştıkları için birbirini bozmasınlar. |

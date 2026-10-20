@@ -42,4 +42,16 @@ Bağlantı **tek kullanımlıktır** ve yaklaşık **1 saat** geçerlidir.
 Çalışma kuyruğu sorgusu `EXPLAIN ANALYZE` ile 5000 kartlık sahte veriyle (işlem sonunda geri alındı) ölçüldü:
 `card_progress_user_due_idx` (user_id, due) indeksi kullanılıyor, sorgu ~1 ms'de çalışıyor (2026-10-19).
 
+Lighthouse (mobil, `pnpm build && pnpm lighthouse`, 2026-10-20):
+
+| Sayfa      | Performance | Accessibility | Best practices | İlk yük JS (gzip) |
+| ---------- | ----------- | ------------- | -------------- | ----------------- |
+| Giriş      | 99          | 100           | 100            | 145 kB            |
+| Desteler   | 99          | 100           | 100            | 145 kB            |
+| Deste      | 97          | 100           | 100            | 145 kB            |
+| Çalış      | 98          | 100           | 100            | 156 kB            |
+| İstatistik | 99          | 100           | 100            | 144 kB            |
+
+PWA: Chrome'un kurulabilirlik denetimi hatasız (e2e testinde doğrulanıyor).
+
 _Diğer bölümler (kullanım, yedekleme, yayın) sonraki aşamalarda eklenecek._

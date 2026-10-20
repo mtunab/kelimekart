@@ -108,7 +108,7 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
       <section aria-labelledby="kartlar" className="flex flex-col gap-3">
         <h2 id="kartlar" className="text-lg font-semibold">
           {arsiv ? "Arşivdeki kartlar" : "Kartlar"}{" "}
-          <span className="font-normal text-zinc-500">({total})</span>
+          <span className="font-normal text-zinc-500 dark:text-zinc-400">({total})</span>
         </h2>
 
         <form method="get" className="flex gap-2" role="search">
@@ -176,7 +176,7 @@ export default async function DeckPage({ params, searchParams }: PageProps<"/dec
                   >
                     {card.back}
                     {card.tags.length ? (
-                      <span className="text-zinc-400">
+                      <span className="text-zinc-500 dark:text-zinc-400">
                         {" "}
                         · {card.tags.map((t) => `#${t}`).join(" ")}
                       </span>

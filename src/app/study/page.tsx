@@ -59,7 +59,9 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
         >
           ← {deckName ?? "Desteler"}
         </Link>
-        <span className="text-sm text-zinc-500">{deckName ? "Bu deste" : "Tüm desteler"}</span>
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+          {deckName ? "Bu deste" : "Tüm desteler"}
+        </span>
       </div>
       {queueResult.error ? (
         <p role="alert" className="text-red-700 dark:text-red-300">

@@ -59,7 +59,7 @@ export default async function SettingsPage() {
         <h2 id="sifre" className="mb-1 text-lg font-semibold">
           Şifre değiştir
         </h2>
-        <p className="mb-3 text-sm text-zinc-500">{user.email}</p>
+        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">{user.email}</p>
         <PasswordForm />
       </section>
     </PageShell>

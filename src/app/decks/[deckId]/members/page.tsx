@@ -45,7 +45,7 @@ export default async function MembersPage({ params }: PageProps<"/decks/[deckId]
             <span>
               {m.name}
               {m.user_id === user.id ? " (sen)" : ""}
-              <span className="ml-2 text-sm text-zinc-500">
+              <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
                 {m.role === "owner" ? "sahip" : "üye"}
               </span>
             </span>

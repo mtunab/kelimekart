@@ -388,10 +388,10 @@ export function StudySession({
               Çevir
             </button>
           )}
-          <p className="hidden text-center text-xs text-zinc-500 sm:block">
+          <p className="hidden text-center text-xs text-zinc-500 sm:block dark:text-zinc-400">
             Kısayollar: Boşluk = çevir · 1–4 = puan · Z = geri al
           </p>
-          <p className="text-center text-xs text-zinc-500 sm:hidden">
+          <p className="text-center text-xs text-zinc-500 sm:hidden dark:text-zinc-400">
             Çevirdikten sonra kartı sağa kaydır = İyi, sola = Tekrar
           </p>
         </>
@@ -421,7 +421,7 @@ export function StudySession({
             <p className="text-zinc-700 dark:text-zinc-300">🔥 {summary.streak} günlük seri</p>
           ) : null}
           {pendingCount > 0 ? (
-            <p className="text-sm text-zinc-500">Cevaplar kaydediliyor…</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Cevaplar kaydediliyor…</p>
           ) : null}
           <div className="flex flex-wrap justify-center gap-2">
             {lastUndoable ? (
@@ -446,7 +446,7 @@ function noopSubscribe() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-900">
-      <dt className="text-sm text-zinc-500">{label}</dt>
+      <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
       <dd className="text-2xl font-semibold">{value}</dd>
     </div>
   );

@@ -127,7 +127,7 @@ export function QuickAdd({
           status?.tone === "error"
             ? "text-red-700 dark:text-red-300"
             : status?.tone === "info"
-              ? "text-zinc-500"
+              ? "text-zinc-500 dark:text-zinc-400"
               : "text-green-700 dark:text-green-300"
         }`}
       >

@@ -123,7 +123,7 @@ export default async function StatsPage() {
             </table>
           </div>
         )}
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Olgun: 21 gün ve daha uzun aralıkla tekrar edilen kartlar.
         </p>
       </section>
@@ -139,7 +139,7 @@ export default async function StatsPage() {
               className={`flex min-h-12 items-center justify-between gap-2 px-3 ${row.is_me ? "bg-indigo-50 dark:bg-indigo-950/40" : ""}`}
             >
               <span>
-                <span className="mr-2 text-zinc-400">{i + 1}.</span>
+                <span className="mr-2 text-zinc-500 dark:text-zinc-400">{i + 1}.</span>
                 {row.display_name}
                 {row.is_me ? " (sen)" : ""}
               </span>
@@ -149,7 +149,9 @@ export default async function StatsPage() {
             </li>
           ))}
         </ol>
-        <p className="text-xs text-zinc-500">Panoda sadece adlar ve sayılar görünür.</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Panoda sadece adlar ve sayılar görünür.
+        </p>
       </section>
     </PageShell>
   );
@@ -158,9 +160,9 @@ export default async function StatsPage() {
 function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-2xl border border-zinc-200 p-3 dark:border-zinc-800">
-      <dt className="text-sm text-zinc-500">{label}</dt>
+      <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
       <dd className="text-2xl font-semibold">{value}</dd>
-      <dd className="text-xs text-zinc-500">{sub}</dd>
+      <dd className="text-xs text-zinc-500 dark:text-zinc-400">{sub}</dd>
     </div>
   );
 }

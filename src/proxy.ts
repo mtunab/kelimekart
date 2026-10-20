@@ -40,6 +40,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Statik dosyalar, ikonlar ve PWA dosyaları hariç her şey.
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|offline.html|robots.txt).*)",
   ],
 };
