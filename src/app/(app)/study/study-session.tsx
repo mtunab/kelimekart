@@ -321,7 +321,7 @@ export function StudySession({
 
       {current ? (
         <>
-          <div className="relative my-1 min-h-0 flex-1 max-sm:max-h-80 sm:my-2 sm:flex-none">
+          <div className="relative my-1 min-h-0 flex-1 max-sm:max-h-[28rem] sm:my-2 sm:flex-none">
             {/* Bildirim yer kaplamaz: kartın üstünde süzülür. */}
             <div
               role="status"
@@ -359,57 +359,55 @@ export function StudySession({
             </AnimatePresence>
           </div>
 
-          <div className="flex justify-center gap-2">
+          {/* Tek satır: Listen · Show answer / kaydırma ipucu · Undo. Dikey yer kazandırır, kart büyük kalır. */}
+          <div className="flex items-stretch gap-2">
             {speechAvailable ? (
               <button
                 type="button"
-                className={buttonClass("secondary", "text-sm")}
+                className={buttonClass("secondary", "size-14 shrink-0 px-0!")}
                 onClick={() => speak(current.front, current.sourceLang)}
                 aria-label={`Listen to "${current.front}"`}
               >
-                <SpeakerIcon size={18} />
-                Listen
+                <SpeakerIcon size={22} />
               </button>
             ) : null}
+            <AnimatePresence mode="wait" initial={false}>
+              {flipped ? (
+                // Puan düğmeleri yok (Tuna'nın isteği): telefonda kaydır, klavyede 1-4.
+                <m.p
+                  key="swipe-hint"
+                  className="border-ink flex min-h-14 min-w-0 flex-1 items-center justify-between gap-1 rounded-xl border-[2.5px] border-dashed px-3 text-sm font-bold"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                >
+                  <span>← Again · {previews?.[1]}</span>
+                  <span>Good · {previews?.[3]} →</span>
+                </m.p>
+              ) : (
+                <m.button
+                  key="show"
+                  type="button"
+                  className={buttonClass("primary", "min-h-14 min-w-0 flex-1 text-lg")}
+                  onClick={() => setFlipped(true)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                >
+                  Show answer
+                </m.button>
+              )}
+            </AnimatePresence>
             <button
               type="button"
-              className={buttonClass("secondary", "text-sm")}
+              className={buttonClass("secondary", "size-14 shrink-0 px-0!")}
               onClick={undo}
               disabled={!lastUndoable}
+              aria-label="Undo last answer"
             >
-              <UndoIcon size={18} />
-              Undo
+              <UndoIcon size={22} />
             </button>
           </div>
-
-          <AnimatePresence mode="wait" initial={false}>
-            {flipped ? (
-              // Puan düğmeleri yok (Tuna'nın isteği): telefonda kaydır, klavyede 1-4.
-              <m.p
-                key="swipe-hint"
-                className="border-ink flex min-h-14 items-center justify-between rounded-xl border-[2.5px] border-dashed px-4 text-sm font-bold"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.1 } }}
-              >
-                <span>← Again · {previews?.[1]}</span>
-                <span className="text-ink-soft text-xs font-medium">swipe</span>
-                <span>Good · {previews?.[3]} →</span>
-              </m.p>
-            ) : (
-              <m.button
-                key="show"
-                type="button"
-                className={buttonClass("primary", "min-h-14 w-full text-lg")}
-                onClick={() => setFlipped(true)}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.1 } }}
-              >
-                Show answer
-              </m.button>
-            )}
-          </AnimatePresence>
           <p className="text-ink-soft hidden text-center text-xs sm:block">
             Keys: Space = flip · 1 Again · 2 Hard · 3 Good · 4 Easy · Z = undo
           </p>
