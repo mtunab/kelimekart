@@ -10,8 +10,8 @@ export default function ForgotPasswordPage() {
     <AuthCard title="Forgot password">
       <div className="text-ink flex flex-col gap-3 text-center">
         <p>
-          In KelimeKart, the group admin creates accounts and resets passwords. Let the admin (Tuna)
-          know and they&apos;ll give you a new password.
+          In KelimeKart, the group admin creates accounts and resets passwords. Let the admin know
+          and they&apos;ll give you a new password.
         </p>
         <p className="text-ink-soft text-sm">
           After logging in with the new password, you can pick your own under{" "}

@@ -12,7 +12,7 @@ Kelimeler ortak destelerde durur; herkesin çalışma ilerlemesi kendine özeldi
 
 ## 1. Nasıl kullanılır (kısaca)
 
-1. Grup yöneticisi (Tuna) sana bir hesap açar ve **kullanıcı adını + şifreni** verir. Onlarla giriş yaparsın.
+1. Grup yöneticisi (admin) sana bir hesap açar ve **kullanıcı adını + şifreni** verir. Onlarla giriş yaparsın.
 2. **Decks** sekmesinde bir deste oluşturursun ya da sana paylaşılan bir desteyi açarsın.
 3. Kelime eklersin: **Word** ve **Meaning** yazıp Enter'a basarsın (art arda hızlıca). Çok kelime için **Import**.
 4. Ana sayfa **Study** başlangıç ekranıdır: bugün kaç kart beklediğini görürsün, **Start studying**'e basarsın. Kartı çevir (dönerek açılır), ne kadar iyi hatırladığını seç. Uygulama kartı ne zaman tekrar göstereceğini kendisi hesaplar.
