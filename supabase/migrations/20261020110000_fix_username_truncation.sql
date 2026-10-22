@@ -1,5 +1,5 @@
 -- Düzeltme: önceki sürümde rpad(ad, 3, '0') uzun kullanıcı adlarını 3 karaktere KESİYORDU
--- (ör. "tunabozkurt78" → "tun"). Yönetici komutuyla açılan hesaplar etkilenmedi (ad metadata'dan gelir).
+-- (ör. "ornekkullanici12" → "orn"). Yönetici komutuyla açılan hesaplar etkilenmedi (ad metadata'dan gelir).
 
 -- 1) Tetikleyiciyi doğru haliyle yeniden kur.
 create or replace function public.handle_new_user()

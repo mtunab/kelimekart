@@ -96,7 +96,7 @@ pnpm restore backups/kelimekart-prod-<tarih>.json --prod
 | Belirti                                                                                     | Neden / Çözüm                                                                                        |
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | PowerShell: `pnpm : File ... pnpm.ps1 cannot be loaded because running scripts is disabled` | Windows güvenlik ayarı. Ayarı değiştirmeden **`pnpm.cmd`** kullan: `pnpm.cmd user list --prod`       |
-| `Command "user" not found`                                                                  | Komut yanlış klasörde çalıştırıldı. Önce: `cd "C:\Users\tunab\Desktop\Duo Cards"`                    |
+| `Command "user" not found`                                                                  | Komut yanlış klasörde çalıştırıldı. Önce: `cd "<projenin bulunduğu klasör>"`                         |
 | Girişte "Wrong username or password."                                                       | Kullanıcı adını doğru yazdığından emin ol. Şifre unutulduysa: `pnpm user password ad --prod`         |
 | Girişte "Too many attempts"                                                                 | Güvenlik için 5 dakika bekle.                                                                        |
 | Hesap açarken "Grup dolu: en fazla 5 kişi"                                                  | 5 kişi sınırı. Biri silinmeden yeni hesap açılamaz (bölüm 2).                                        |
