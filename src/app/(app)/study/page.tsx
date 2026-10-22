@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageShell } from "@/components/page-shell";
 import { requireUser } from "@/lib/auth";
 import type { ProgressFields } from "@/lib/srs";
 import { uuidSchema } from "@/lib/validation/cards";
@@ -51,8 +50,10 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
   const deckName = (deckResult.data as { name: string } | null)?.name ?? null;
 
   return (
-    <PageShell width="max-w-xl">
-      <div className="flex items-center justify-between gap-2">
+    // Telefonda çalışma ekranı kaydırma olmadan tek ekrana sığar: yükseklik = ekran - üst çubuk;
+    // kart kalan boşluğu doldurur. Altta yüzen menü için boşluk bırakılır.
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-3 px-4 pt-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] max-sm:h-[calc(100dvh-4rem)] max-sm:overflow-hidden sm:flex-1 sm:gap-6 sm:pt-6 sm:pb-8">
+      <div className="hidden items-center justify-between gap-2 sm:flex">
         <Link
           href={deckId ? `/decks/${deckId}` : "/"}
           className="rounded-lg py-1 text-sm font-bold underline decoration-2 underline-offset-4"
@@ -76,6 +77,6 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
           backHref={deckId ? `/decks/${deckId}` : "/"}
         />
       )}
-    </PageShell>
+    </main>
   );
 }

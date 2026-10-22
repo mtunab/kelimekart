@@ -299,11 +299,11 @@ export function StudySession({
   const lastUndoable = history.some((h) => h.status === "pending" || h.status === "saved");
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 sm:flex-none sm:gap-4">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-sm font-bold">
           <span>
-            Daily goal: {doneToday} / {dailyGoal}
+            Goal {doneToday} / {dailyGoal}
           </span>
           {!finished ? (
             <span className="flex gap-1.5">
@@ -319,25 +319,29 @@ export function StudySession({
         <ProgressBar value={doneToday} max={dailyGoal} label="Daily goal" />
       </div>
 
-      <div role="status" aria-live="polite" className="min-h-5 text-sm">
-        <AnimatePresence mode="wait" initial={false}>
-          {notice ? (
-            <m.p
-              key={notice}
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="border-ink bg-yellow text-on-accent inline-block rounded-lg border-2 px-2 py-0.5 font-bold"
-            >
-              {notice}
-            </m.p>
-          ) : null}
-        </AnimatePresence>
-      </div>
-
       {current ? (
         <>
-          <div className="relative my-2">
+          <div className="relative my-1 min-h-0 flex-1 sm:my-2 sm:flex-none">
+            {/* Bildirim yer kaplamaz: kartın üstünde süzülür. */}
+            <div
+              role="status"
+              aria-live="polite"
+              className="absolute inset-x-0 -top-2 z-20 text-sm"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {notice ? (
+                  <m.p
+                    key={notice}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="border-ink bg-yellow text-on-accent shadow-hard-sm inline-block rounded-lg border-2 px-2 py-0.5 font-bold"
+                  >
+                    {notice}
+                  </m.p>
+                ) : null}
+              </AnimatePresence>
+            </div>
             {/* Arkada eğik duran ikinci kart: destenin devam ettiğini hissettirir. */}
             <div
               aria-hidden="true"
@@ -408,9 +412,6 @@ export function StudySession({
           </AnimatePresence>
           <p className="text-ink-soft hidden text-center text-xs sm:block">
             Keys: Space = flip · 1 Again · 2 Hard · 3 Good · 4 Easy · Z = undo
-          </p>
-          <p className="text-ink-soft text-center text-xs sm:hidden">
-            Tap to flip, then swipe right = Good, left = Again
           </p>
         </>
       ) : (
@@ -512,7 +513,7 @@ function FlipCard({
       data-testid={isPresent ? "study-card" : undefined}
       data-flipped={flipped}
       aria-hidden={isPresent ? undefined : true}
-      className={`relative w-full touch-pan-y select-none [perspective:1200px] ${
+      className={`relative h-full w-full touch-pan-y select-none [perspective:1200px] ${
         flipped ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       }`}
       style={{ x, rotate }}
@@ -548,7 +549,7 @@ function FlipCard({
       </m.span>
 
       <m.div
-        className="grid [transform-style:preserve-3d]"
+        className="grid h-full [transform-style:preserve-3d]"
         initial={false}
         animate={{ rotateY: flipped ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 240, damping: 24 }}
@@ -600,7 +601,7 @@ function Face({
   return (
     <div
       aria-hidden={hidden || undefined}
-      className="border-ink bg-surface shadow-hard-lg relative col-start-1 row-start-1 flex min-h-80 flex-col items-center justify-center gap-3 rounded-3xl border-[3px] p-6 text-center"
+      className="border-ink bg-surface shadow-hard-lg relative col-start-1 row-start-1 flex min-h-0 flex-col items-center [justify-content:safe_center] gap-3 overflow-y-auto rounded-3xl border-[3px] p-6 text-center sm:min-h-80"
       style={{
         backfaceVisibility: "hidden",
         WebkitBackfaceVisibility: "hidden",
