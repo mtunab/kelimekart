@@ -321,7 +321,7 @@ export function StudySession({
 
       {current ? (
         <>
-          <div className="relative my-1 min-h-0 flex-1 sm:my-2 sm:flex-none">
+          <div className="relative my-1 min-h-0 flex-1 max-sm:max-h-80 sm:my-2 sm:flex-none">
             {/* Bildirim yer kaplamaz: kartın üstünde süzülür. */}
             <div
               role="status"
@@ -412,6 +412,9 @@ export function StudySession({
           </AnimatePresence>
           <p className="text-ink-soft hidden text-center text-xs sm:block">
             Keys: Space = flip · 1 Again · 2 Hard · 3 Good · 4 Easy · Z = undo
+          </p>
+          <p className="text-ink-soft text-center text-xs sm:hidden">
+            Tap to flip, then swipe right = Good, left = Again.
           </p>
         </>
       ) : (
