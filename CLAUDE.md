@@ -9,7 +9,7 @@
 
 **Ne:** DuoCards benzeri, web üzerinden çalışan kelime kartı (flashcard) uygulaması. Aralıklı tekrar (spaced repetition) ile kelime ezberletir.
 
-**Kim kullanacak:** Kapalı bir grup, **en fazla 5 kişi** (Tuna + arkadaşları). Herkese açık kayıt YOK. Hesapları sadece davetle oluşur.
+**Kim kullanacak:** Kapalı bir grup, **en fazla 20 kişi** (Tuna + arkadaşları; ilk sürümde 5'ti, 2026-10-22'de yükseltildi). Herkese açık kayıt YOK. Hesapları sadece davetle oluşur.
 
 **Temel istek:** Grup kendi kelimelerini uygulamanın içinde saklayabilmeli. Kelimeler ortak desteye eklenir, ama **herkesin öğrenme ilerlemesi (hangi kartı ne zaman tekrar edeceği) kişiye özel** olur.
 
@@ -337,4 +337,5 @@ Verdiğin her önemli teknik kararı (ör. undo yöntemi, FSRS ayarları, ek pak
 | 2026-10-20 | Telefon alt menüsü: yüzen kapsül; seçim hızına göre esneyerek kayar, basılı tutunca (200 ms) iOS 26 tarzı büyüyen "baloncuk" olur, parmağı takip eder, bırakınca en yakın sekmeye yaylanıp o sayfayı açar (`components/nav-links.tsx`) | Tuna'nın isteği; bağlantılar gerçek `<a>` kaldığı için klavye ve ekran okuyucu etkilenmez, uzun basışta tarayıcı menüsü kapatıldı. |
 | 2026-10-20 | Çalışma ekranında `ts-fsrs` ilk yükte inmez; sayfa açılınca arka planda yüklenir, ondan önce verilen cevap sıraya alınır. Alt menüde gösterge `animate()` yerine yay değeri (`useSpring`) | İlk yük JS hedefi (200 kB gzip): çalışma sayfası 207 → 196 kB. |
 | 2026-10-22 | Telefonda çalışma ekranı kaydırmasız tek ekrana sığar (`h = 100dvh - üst çubuk`, kart `flex-1`, en fazla 28rem); Home / All decks satırı ve kaydırma ipucu duruyor; Listen · Show answer · Undo tek satırda (Listen/Undo simge düğmesi), bildirim kartın üstünde süzülür. Masaüstünde eski düzen | Tuna ekran kaydını gösterdi: üst kısım ekran dışında kalıyor, kaydırma kart kaydırmayla karışıyordu. 664/740/844 px yükseklikte kaydırma yok, kart 282/358/448 px (geçici e2e ile ölçüldü). |
+| 2026-10-22 | Grup sınırı 5 → **20 kişi** (Tuna 15 kişi daha istedi): migration `20261022090000_raise_profile_limit` `max_profiles()` fonksiyonunu 20 yapar; sınır test ve `pnpm user list` içinde sabit değil, fonksiyondan okunur. Prod'a `pnpm db:push --prod` ile uygulanır | Sınırın tek yeri veritabanı fonksiyonu; Supabase ücretsiz plan (50.000 aylık kullanıcı, 500 MB) ve Vercel Hobby (ticari olmayan) 20 kişi için yeterli. Bu karar 5. bölümdeki "5 kişi sınırı" maddesinin sayısını değiştirir. |
 | 2026-10-19 | Güvenlik testleri Vitest içinde `tests/security/` altında, dosyalar sırayla çalışır | Aynı dev veritabanını paylaştıkları için birbirini bozmasınlar. |

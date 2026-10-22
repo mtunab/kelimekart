@@ -1,6 +1,6 @@
 # KelimeKart
 
-Arkadaş grubu (en fazla 5 kişi) için aralıklı tekrarlı kelime kartı uygulaması.
+Arkadaş grubu (en fazla 20 kişi) için aralıklı tekrarlı kelime kartı uygulaması.
 Kelimeler ortak destelerde durur; herkesin çalışma ilerlemesi kendine özeldir.
 
 - **Canlı site:** https://kelimekart-five.vercel.app
@@ -24,7 +24,7 @@ Ayrıntılar: [KULLANIM.md](KULLANIM.md).
 
 ## 2. Hesap yönetimi — yönetici için
 
-Herkese açık kayıt kapalıdır; grup **en fazla 5 kişi** olabilir. Giriş **kullanıcı adı + şifre** iledir (e-posta yok).
+Herkese açık kayıt kapalıdır; grup **en fazla 20 kişi** olabilir. Giriş **kullanıcı adı + şifre** iledir (e-posta yok).
 Hesaplar **kendiliğinden silinmez**; yalnızca yönetici siler. Komutlar proje klasöründe çalıştırılır
 (Windows PowerShell'de `pnpm` yerine **`pnpm.cmd`** yaz; bkz. Sorun giderme).
 
@@ -82,7 +82,7 @@ pnpm restore backups/kelimekart-prod-<tarih>.json --prod
 | 6   | **Telaffuz cihazın seslerine bağlı.** Bazı cihazlarda bazı diller için ses yoktur; o zaman "Listen" ses çıkarmaz.                                                                                                                                    | Cihazın dil/ses ayarlarından dil paketi eklenebilir.                        |
 | 7   | **Kart ve deste kalıcı olarak silinmez, sadece arşivlenir.** Destenin sahipliği başkasına devredilemez.                                                                                                                                              | Arşivden geri alınabilir.                                                   |
 | 8   | **Ortak destede her üye her kartı düzenleyebilir ve arşivleyebilir** (sadece ekleyen değil).                                                                                                                                                         | Grupta anlaşarak kullanın.                                                  |
-| 9   | Sınırlar: en fazla **5 kişi**, tek seferde en fazla **2000 kart** içe aktarma, kart başına en fazla **10 etiket**, kelime en fazla 200, anlam en fazla 500 karakter. Kullanıcı adı sonradan değiştirilemez.                                          | —                                                                           |
+| 9   | Sınırlar: en fazla **20 kişi**, tek seferde en fazla **2000 kart** içe aktarma, kart başına en fazla **10 etiket**, kelime en fazla 200, anlam en fazla 500 karakter. Kullanıcı adı sonradan değiştirilemez.                                         | —                                                                           |
 | 10  | Arama kelimenin bir parçasını arar (ör. "elm" → "elma"); yazım hatasını tolere etmez. Büyük/küçük harf ve i/ı farkı önemsizdir.                                                                                                                      | —                                                                           |
 | 11  | "Gün" senin saat dilimine göre **sabah 04:00**'te başlar (gece 02:00'de çalışmak hâlâ "dün" sayılır).                                                                                                                                                | Saat dilimini **Settings**'ten değiştir.                                    |
 | 12  | Yalnızca `main` dalı canlıya çıkar; Vercel'in deneme (preview) yayınlarında veritabanı bilgisi olmadığı için çalışmazlar.                                                                                                                            | Bilerek böyle: deneme yayınları gerçek veriye dokunmasın.                   |
@@ -99,7 +99,7 @@ pnpm restore backups/kelimekart-prod-<tarih>.json --prod
 | `Command "user" not found`                                                                  | Komut yanlış klasörde çalıştırıldı. Önce: `cd "<projenin bulunduğu klasör>"`                         |
 | Girişte "Wrong username or password."                                                       | Kullanıcı adını doğru yazdığından emin ol. Şifre unutulduysa: `pnpm user password ad --prod`         |
 | Girişte "Too many attempts"                                                                 | Güvenlik için 5 dakika bekle.                                                                        |
-| Hesap açarken "Grup dolu: en fazla 5 kişi"                                                  | 5 kişi sınırı. Biri silinmeden yeni hesap açılamaz (bölüm 2).                                        |
+| Hesap açarken "Grup dolu: en fazla 20 kişi"                                                 | 20 kişi sınırı. Biri silinmeden yeni hesap açılamaz (bölüm 2).                                       |
 | Hesap açarken "zaten var"                                                                   | O kullanıcı adı alınmış. Başka bir ad seç ya da şifresini yenile.                                    |
 | Site açılıyor ama her şey hata veriyor                                                      | Supabase projesi duraklatılmış olabilir (sınırlama 2) → **Restore project**.                         |
 | Study'de yeni kart gelmiyor                                                                 | Günlük yeni kart sınırı dolmuş olabilir. **Settings → New cards per day** sayısını artır.            |

@@ -92,7 +92,8 @@ async function run(cmd: UserCommand, admin: SupabaseClient, env: string) {
       .select("username, display_name, created_at")
       .order("created_at");
     if (error) throw new Error(error.message);
-    console.log(`Hesaplar (${env}): ${data.length} / 5`);
+    const { data: limit } = await admin.rpc("max_profiles");
+    console.log(`Hesaplar (${env}): ${data.length} / ${limit ?? "?"}`);
     for (const p of data) console.log(`  ${p.username.padEnd(20)} ${p.display_name}`);
     return;
   }
