@@ -38,6 +38,8 @@ in your head, then flip the card and tell the app how well you remembered:
   On a keyboard, **1–4** gives all four answers.
 - **Listen** reads the word aloud. **Undo** (**Z** on a keyboard) takes back your last answer.
 - By default you get **10 new cards** a day plus the reviews that are due. At the end you see a summary: cards, accuracy, tomorrow's load.
+- If you finish today's cards before your **daily goal**, more cards come automatically: first new words, then words that are due soon.
+- A card you got wrong comes back after a **short break** (about 1–10 minutes), never twice in a row. If only those cards are left, a countdown shows when the next one is ready.
 - A new day starts at **4:00 AM**. Study at least one card every day to grow your **streak** (the flame); skip a day and it resets.
 
 ## 4. Stats and settings

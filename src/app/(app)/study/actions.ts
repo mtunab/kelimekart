@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { fromFsrsCard, review, toFsrsCard, type ProgressFields } from "@/lib/srs";
-import { reviewInputSchema, undoInputSchema } from "@/lib/validation/study";
+import { extraCardsInputSchema, reviewInputSchema, undoInputSchema } from "@/lib/validation/study";
+import { toQueueItem, type QueueItem, type QueueRow } from "./queue-item";
 
 export type SubmitReviewResult =
   | { ok: true; logId: number | null; progress: ProgressFields | null }
@@ -80,7 +80,8 @@ export async function sessionSummary() {
     supabase.rpc("study_today").single(),
     supabase.rpc("due_forecast", { p_days: 2 }),
   ]);
-  revalidatePath("/");
+  // Burada sayfa yenilenmez: yenilenirse çalışma ekranı az önceki cevapları iki kez sayıyordu
+  // ("Goal 6 / 6" ama 3 kart). Ana sayfa zaten her açılışta güncel veriyi çeker.
   const rows = (forecast.data ?? []) as { day: string; due_count: number }[];
   const t = today.data as { reviews_today: number; streak_count: number } | null;
   return {
@@ -88,4 +89,23 @@ export async function sessionSummary() {
     streak: Number(t?.streak_count ?? 0),
     tomorrowDue: Number(rows[1]?.due_count ?? 0),
   };
+}
+
+export type ExtraCardsResult = { ok: true; items: QueueItem[] } | { ok: false };
+
+/**
+ * Günlük hedefe ulaşılmadan liste biterse çalışma ekranı buradan ek kart ister:
+ * önce yeni kelimeler (günlük sınırın ötesinde), kalmazsa en yakında tekrar zamanı gelecek kartlar.
+ */
+export async function extraCards(input: unknown): Promise<ExtraCardsResult> {
+  const parsed = extraCardsInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("get_extra_cards", {
+    p_deck_id: parsed.data.deckId,
+    p_exclude: parsed.data.exclude,
+    p_limit: parsed.data.limit,
+  });
+  if (error) return { ok: false };
+  return { ok: true, items: ((data ?? []) as QueueRow[]).map(toQueueItem) };
 }

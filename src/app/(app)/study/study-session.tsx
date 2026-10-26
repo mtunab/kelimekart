@@ -13,25 +13,26 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { ProgressBar } from "@/components/motion/progress-bar";
 import { FlameIcon, SpeakerIcon, UndoIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui/button";
-import type { Grade, ProgressFields } from "@/lib/srs";
-import { sessionSummary, submitReview, undoReview } from "./actions";
+import type { Grade } from "@/lib/srs";
+import { countGap, MIN_GAP, pickNext, type QueueSlot } from "@/lib/study-queue";
+import { extraCards, sessionSummary, submitReview, undoReview } from "./actions";
+import type { QueueItem } from "./queue-item";
 import { canSpeak, speak } from "./speech";
 
-export type QueueItem = {
-  cardId: string;
-  deckId: string;
-  front: string;
-  back: string;
-  example: string | null;
-  note: string | null;
-  sourceLang: string;
-  targetLang: string;
-  isNew: boolean;
-  progress: ProgressFields | null;
-};
+/** Oturumdaki kart: dönüş zamanı ve "araya girecek kart" sayacıyla. */
+type Slot = QueueItem & QueueSlot;
+
+/** Öğrenme adımındaki kart (ilk cevapta) hemen gösterilebilir; sonra gerçek zamanını bekler. */
+function toSlot(item: QueueItem): Slot {
+  const due = item.progress ? Date.parse(item.progress.due) : 0;
+  return { ...item, availableAt: Number.isFinite(due) ? due : 0, gapLeft: 0 };
+}
+
+/** Günlük hedefe ulaşılmadan liste biterse bir seferde istenen ek kart sayısı. */
+const EXTRA_BATCH = 5;
 
 type HistoryEntry = {
-  item: QueueItem;
+  item: Slot;
   rating: Grade;
   status: "pending" | "saved" | "failed" | "undone";
   logId: number | null;
@@ -42,7 +43,7 @@ type HistoryEntry = {
 /** Kartın çıkış yönü: Again sola, Hard/Good sağa, Easy yukarı. */
 type ExitDir = { x: number; y: number };
 
-/** Öğrenme adımındaki kart bu süre içinde vadesi gelecekse oturumda tekrar gösterilir. */
+/** Öğrenme adımındaki kart bu süre içinde vadesi gelecekse oturumda (zamanı gelince) tekrar gösterilir. */
 const LEARN_AHEAD_MS = 20 * 60_000;
 const SWIPE_DISTANCE = 100;
 const SWIPE_VELOCITY = 600;
@@ -104,13 +105,26 @@ export function StudySession({
   reviewsToday,
   dailyGoal,
   backHref,
+  deckId,
+  serverNow,
 }: {
   initialQueue: QueueItem[];
   reviewsToday: number;
   dailyGoal: number;
   backHref: string;
+  deckId: string | null;
+  serverNow: number;
 }) {
-  const [queue, setQueue] = useState(initialQueue);
+  // Oturum başındaki sayı bir kez alınır: sayfa sunucudan yenilense de (ör. giriş anahtarı
+  // tazelenince) bu oturumdaki cevaplar iki kez sayılmaz.
+  const [startReviews] = useState(reviewsToday);
+  const [queue, setQueue] = useState<Slot[]>(() => initialQueue.map(toSlot));
+  // Kart seçimi bu saate göre yapılır; cevapta ve beklerken saniyede bir güncellenir.
+  const [now, setNow] = useState(serverNow);
+  const [lastCardId, setLastCardId] = useState<string | null>(null);
+  // Ek kart: istek sürüyor mu, kaynak tükendi mi?
+  const fetchingExtra = useRef(false);
+  const [extraExhausted, setExtraExhausted] = useState(false);
   const [flipped, setFlipped] = useState(false);
   // Her gösterim için ayrı anahtar: aynı kart tekrar gelse de giriş/çıkış animasyonu çalışsın.
   const [turn, setTurn] = useState(0);
@@ -129,14 +143,18 @@ export function StudySession({
   const queuedRating = useRef<Grade | null>(null);
   const answerRef = useRef<(rating: Grade) => void>(() => undefined);
 
-  const current = queue[0];
+  const pick = pickNext(queue, now, lastCardId);
+  const current = pick.kind === "card" ? queue[pick.index] : undefined;
   const answered = history.filter((h) => h.status !== "undone" && h.status !== "failed");
   const correct = answered.filter((h) => h.rating >= 2).length;
-  const doneToday = reviewsToday + answered.length;
+  const doneToday = startReviews + answered.length;
   const newLeft = queue.filter((q) => q.isNew).length;
   const reviewLeft = queue.length - newLeft;
   const pendingCount = history.filter((h) => h.status === "pending").length;
-  const finished = !current;
+  // Hedefe ulaşılmadıysa liste bitince (ya da sadece bekleyen kartlar kalınca) ek kart gelir.
+  const wantsExtra = !current && doneToday < dailyGoal && !extraExhausted;
+  const waiting = !current && pick.kind === "wait" && !wantsExtra;
+  const finished = !current && pick.kind === "empty" && !wantsExtra;
 
   const previews = useMemo(() => {
     if (!srs || !current || !flipped) return null;
@@ -169,13 +187,28 @@ export function StudySession({
         return;
       }
       const item = current;
-      const now = new Date();
-      const next = lib.review(lib.toFsrsCard(item.progress, now), rating, now);
-      const requeue = next.due.getTime() - now.getTime() <= LEARN_AHEAD_MS;
-      const optimistic: QueueItem = { ...item, isNew: false, progress: lib.fromFsrsCard(next) };
+      const answeredAt = new Date();
+      const next = lib.review(lib.toFsrsCard(item.progress, answeredAt), rating, answeredAt);
+      const requeue = next.due.getTime() - answeredAt.getTime() <= LEARN_AHEAD_MS;
+      // Tekrar gelecekse gerçek zamanını bekler ve araya en az MIN_GAP kart girer.
+      const optimistic: Slot = {
+        ...item,
+        isNew: false,
+        progress: lib.fromFsrsCard(next),
+        availableAt: next.due.getTime(),
+        gapLeft: MIN_GAP,
+      };
 
       setExitDir(EXIT_BY_GRADE[rating]);
-      setQueue((q) => (requeue ? [...q.slice(1), optimistic] : q.slice(1)));
+      setQueue((q) => {
+        const rest = countGap(
+          q.filter((x) => x.cardId !== item.cardId),
+          item.cardId,
+        );
+        return requeue ? [...rest, optimistic] : rest;
+      });
+      setNow(answeredAt.getTime());
+      setLastCardId(item.cardId);
       setTurn((t) => t + 1);
       setFlipped(false);
       setNotice(null);
@@ -203,7 +236,11 @@ export function StudySession({
         } else {
           updateEntry(entryIndex, { status: "failed" });
           // Kart geri gelir: yeniden eklenen kopyayı kaldır, kartı öne koy.
-          setQueue((q) => [item, ...q.filter((x) => x.cardId !== item.cardId)]);
+          setQueue((q) => [
+            { ...item, availableAt: 0, gapLeft: 0 },
+            ...q.filter((x) => x.cardId !== item.cardId),
+          ]);
+          setLastCardId(null);
           setTurn((t) => t + 1);
           setFlipped(false);
           setNotice(`Couldn't save your answer for "${item.front}" — showing it again.`);
@@ -251,7 +288,11 @@ export function StudySession({
       }
       updateEntry(index, { status: "undone" });
       setExitDir({ x: 0, y: 1 });
-      setQueue((q) => [entry.item, ...q.filter((x) => x.cardId !== entry.item.cardId)]);
+      setQueue((q) => [
+        { ...entry.item, availableAt: 0, gapLeft: 0 },
+        ...q.filter((x) => x.cardId !== entry.item.cardId),
+      ]);
+      setLastCardId(null);
       setTurn((t) => t + 1);
       setFlipped(false);
       setNotice(`Undone: ${entry.item.front}`);
@@ -280,6 +321,38 @@ export function StudySession({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [answer, undo, current, flipped]);
+
+  // Sadece dönüş zamanını bekleyen kartlar kaldıysa: geri sayım için saniyede bir saat güncellenir.
+  const waitUntil = pick.kind === "wait" ? pick.until : null;
+  useEffect(() => {
+    if (waitUntil === null) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [waitUntil]);
+
+  // Günlük hedefe ulaşılmadan kart kalmadıysa ek kartlar kendiliğinden gelir (düğme yok).
+  useEffect(() => {
+    if (!wantsExtra || fetchingExtra.current) return;
+    fetchingExtra.current = true;
+    const seen = new Set([
+      ...queue.map((q) => q.cardId),
+      ...historyRef.current.map((h) => h.item.cardId),
+    ]);
+    extraCards({ deckId, exclude: [...seen], limit: EXTRA_BATCH })
+      .then((result) => {
+        const fresh = result.ok ? result.items.filter((item) => !seen.has(item.cardId)) : [];
+        if (fresh.length === 0) {
+          setExtraExhausted(true);
+          return;
+        }
+        setQueue((q) => [...q, ...fresh.map((item) => ({ ...toSlot(item), availableAt: 0 }))]);
+        setNow(Date.now());
+      })
+      .catch(() => setExtraExhausted(true))
+      .finally(() => {
+        fetchingExtra.current = false;
+      });
+  }, [wantsExtra, deckId, queue]);
 
   // Oturum bitince özet (yarının yükü) sunucudan alınır.
   useEffect(() => {
@@ -415,6 +488,19 @@ export function StudySession({
             Tap to flip, then swipe right = Good, left = Again.
           </p>
         </>
+      ) : waiting && pick.kind === "wait" ? (
+        <WaitPanel
+          secondsLeft={Math.max(1, Math.ceil((pick.until - now) / 1000))}
+          waitingCount={queue.length}
+          goalReached={doneToday >= dailyGoal}
+          canUndo={lastUndoable}
+          onUndo={undo}
+          backHref={backHref}
+        />
+      ) : wantsExtra ? (
+        <p role="status" className="text-ink-soft py-10 text-center font-bold">
+          Loading more cards…
+        </p>
       ) : (
         <m.section
           aria-labelledby="summary"
@@ -452,8 +538,7 @@ export function StudySession({
             </dl>
           ) : (
             <p className="text-ink-soft">
-              No cards are due, and today&apos;s new-card limit is reached or there are no new
-              words.
+              There are no cards to study here right now. Add new words to keep learning.
             </p>
           )}
           {summary && summary.streak > 0 ? (
@@ -611,6 +696,64 @@ function Face({
     >
       {children}
     </div>
+  );
+}
+
+/**
+ * Sadece dönüş zamanını bekleyen kartlar kaldı: geri sayım. Süre dolunca kart kendiliğinden gelir.
+ * (Önceden kart beklemeden hemen tekrar gösteriliyor, iki kart arasında gidip geliniyordu.)
+ */
+function WaitPanel({
+  secondsLeft,
+  waitingCount,
+  goalReached,
+  canUndo,
+  onUndo,
+  backHref,
+}: {
+  secondsLeft: number;
+  waitingCount: number;
+  goalReached: boolean;
+  canUndo: boolean;
+  onUndo: () => void;
+  backHref: string;
+}) {
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = String(secondsLeft % 60).padStart(2, "0");
+  return (
+    <m.section
+      aria-labelledby="waiting"
+      className="brutal-card flex flex-col items-center gap-3 p-6 text-center"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+    >
+      <h1 id="waiting" className="text-2xl font-bold tracking-tight">
+        {goalReached ? "Daily goal reached!" : "Short break"}
+      </h1>
+      <p className="font-medium">Next card in</p>
+      <p
+        className="border-ink bg-yellow text-on-accent shadow-hard-sm rounded-xl border-[2.5px] px-4 py-1 text-4xl font-bold tabular-nums"
+        role="timer"
+        aria-live="off"
+      >
+        {minutes}:{seconds}
+      </p>
+      <p className="text-ink-soft text-sm">
+        {waitingCount === 1 ? "1 card is" : `${waitingCount} cards are`} coming back after a short
+        break, so you remember them better. You can wait here or come back later.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {canUndo ? (
+          <button type="button" className={buttonClass("secondary")} onClick={onUndo}>
+            <UndoIcon size={18} />
+            Undo last answer
+          </button>
+        ) : null}
+        <Link href={backHref} className={buttonClass("primary")}>
+          Done for now
+        </Link>
+      </div>
+    </m.section>
   );
 }
 

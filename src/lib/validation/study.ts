@@ -12,3 +12,10 @@ export type ReviewInput = z.infer<typeof reviewInputSchema>;
 export const undoInputSchema = z.object({
   logId: z.number().int().positive(),
 });
+
+/** Günlük hedefe ulaşılmadan liste bitince istenen ek kartlar. */
+export const extraCardsInputSchema = z.object({
+  deckId: z.uuid().nullable(),
+  exclude: z.array(z.uuid()).max(2000),
+  limit: z.number().int().min(1).max(20),
+});

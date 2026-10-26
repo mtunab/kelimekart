@@ -1,26 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import type { ProgressFields } from "@/lib/srs";
 import { uuidSchema } from "@/lib/validation/cards";
-import { StudySession, type QueueItem } from "./study-session";
+import { toQueueItem, type QueueRow } from "./queue-item";
+import { StudySession } from "./study-session";
 
 export const metadata: Metadata = { title: "Study · KelimeKart" };
 
-type QueueRow = {
-  card_id: string;
-  deck_id: string;
-  front: string;
-  back: string;
-  example: string | null;
-  note: string | null;
-  source_lang: string;
-  target_lang: string;
-  is_new: boolean;
-  progress: (ProgressFields & { version: number }) | null;
-};
-
 type TodayRow = { reviews_today: number; daily_goal: number };
+
+/**
+ * İstek anındaki sunucu saati. Çalışma ekranı ilk kart seçimini bununla yapar; böylece sunucuda
+ * ve tarayıcıda aynı kart seçilir (sayfa her istekte bir kez çizilir).
+ */
+function requestTime() {
+  return Date.now();
+}
 
 export default async function StudyPage({ searchParams }: PageProps<"/study">) {
   const [{ supabase, profile }, params] = await Promise.all([requireUser(), searchParams]);
@@ -35,18 +30,7 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
       : Promise.resolve({ data: null }),
   ]);
 
-  const queue: QueueItem[] = ((queueResult.data ?? []) as QueueRow[]).map((row) => ({
-    cardId: row.card_id,
-    deckId: row.deck_id,
-    front: row.front,
-    back: row.back,
-    example: row.example,
-    note: row.note,
-    sourceLang: row.source_lang,
-    targetLang: row.target_lang,
-    isNew: row.is_new,
-    progress: row.progress,
-  }));
+  const queue = ((queueResult.data ?? []) as QueueRow[]).map(toQueueItem);
   const deckName = (deckResult.data as { name: string } | null)?.name ?? null;
 
   return (
@@ -75,6 +59,8 @@ export default async function StudyPage({ searchParams }: PageProps<"/study">) {
           reviewsToday={Number(todayResult.data?.reviews_today ?? 0)}
           dailyGoal={Number(todayResult.data?.daily_goal ?? profile.daily_goal_reviews)}
           backHref={deckId ? `/decks/${deckId}` : "/"}
+          deckId={deckId}
+          serverNow={requestTime()}
         />
       )}
     </main>

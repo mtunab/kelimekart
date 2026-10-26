@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { createAuthUser, deleteTestUsers, type AuthUser } from "../security/helpers";
+import { createAuthUser, deleteTestUsers, serviceClient, type AuthUser } from "../security/helpers";
 import { login, logout } from "./helpers";
 
 const WORDS = [
@@ -42,6 +42,8 @@ test.describe("ana akış (masaüstü)", () => {
 
   test.beforeAll(async () => {
     user = await createAuthUser("e2e", "Selin");
+    // Hedef 10: 10 kart bitince oturum biter (hedef daha büyük olsaydı ek kartlar kendiliğinden gelirdi).
+    await serviceClient().from("profiles").update({ daily_goal_reviews: 10 }).eq("id", user.id);
   });
   test.afterAll(async () => {
     await deleteTestUsers([user]);
@@ -228,5 +230,115 @@ test.describe("kısa akış (mobil 390px)", () => {
     }
 
     await logout(page);
+  });
+});
+
+test.describe("hedefe kadar devam ve bekleme (masaüstü)", () => {
+  test.skip(({ isMobile }) => isMobile, "Masaüstünde yeterli.");
+  let user: AuthUser;
+
+  test.beforeAll(async () => {
+    user = await createAuthUser("e2e", "Deniz");
+    // Günde 2 yeni kelime, hedef 6 tekrar: liste 2 kartta biter ama oturum hedefe kadar sürmeli.
+    await serviceClient()
+      .from("profiles")
+      .update({ daily_new_limit: 2, daily_goal_reviews: 6 })
+      .eq("id", user.id);
+  });
+  test.afterAll(async () => {
+    await deleteTestUsers([user]);
+  });
+
+  test("liste bitince ek kartlar kendiliğinden gelir, hedefe ulaşınca oturum biter", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    await login(page, user.username, user.password);
+    await expect(page.getByRole("heading", { name: /^Hi, Deniz/ })).toBeVisible();
+    await createDeck(page, "Goal Deck");
+    for (const [front, back] of WORDS.slice(0, 6)) await quickAdd(page, front, back);
+
+    await page
+      .getByRole("navigation", { name: "Deck actions" })
+      .getByRole("link", { name: "Study" })
+      .click();
+    const card = page.getByTestId("study-card");
+    await expect(page.getByText("2 new", { exact: true })).toBeVisible();
+
+    const seen: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      await expect(card).toBeVisible();
+      await expect(page.getByText(`Goal ${i} / 6`)).toBeVisible();
+      seen.push(await card.locator("p").first().innerText());
+      await page.keyboard.press("Space");
+      await expect(card).toHaveAttribute("data-flipped", "true");
+      await page.keyboard.press("4");
+    }
+    // 2 yeni kelime (günlük sınır) + 4 yeni kelime (sınırın ötesinde, kendiliğinden) = 6 farklı kart.
+    expect(new Set(seen).size).toBe(6);
+    for (let i = 1; i < seen.length; i++) expect(seen[i]).not.toBe(seen[i - 1]);
+    await expect(page.getByRole("heading", { name: "Session complete!" })).toBeVisible();
+    await expect(page.getByText("Goal 6 / 6")).toBeVisible();
+    await expect(page.locator("dl > div").filter({ hasText: "Cards" }).locator("dd")).toHaveText(
+      "6",
+    );
+    // Cevapların hepsi sunucuya yazıldı (sonraki test aynı kullanıcıyla devam ediyor).
+    await expect(page.getByText("Saving your answers…")).toHaveCount(0);
+  });
+});
+
+test.describe("geri sayım ve ana sayfa tutarlılığı (masaüstü)", () => {
+  test.skip(({ isMobile }) => isMobile, "Masaüstünde yeterli.");
+  let user: AuthUser;
+
+  test.beforeAll(async () => {
+    user = await createAuthUser("e2e", "Deniz");
+  });
+  test.afterAll(async () => {
+    await deleteTestUsers([user]);
+  });
+
+  test("tek zor kart kalınca geri sayım çıkar; ana sayfada Start düğmesi kaybolmaz", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    await login(page, user.username, user.password);
+    await expect(page.getByRole("heading", { name: /^Hi, Deniz/ })).toBeVisible();
+    await createDeck(page, "Wait Deck");
+    await quickAdd(page, "kite", "uçurtma");
+
+    await page
+      .getByRole("navigation", { name: "Deck actions" })
+      .getByRole("link", { name: "Study" })
+      .click();
+    const card = page.getByTestId("study-card");
+    await expect(card).toBeVisible();
+    await page.keyboard.press("Space");
+    await expect(card).toHaveAttribute("data-flipped", "true");
+    await page.keyboard.press("1"); // Again: ~1 dk sonra döner
+
+    // Kart hemen tekrar gelmez; geri sayım görünür.
+    await expect(page.getByText("Next card in")).toBeVisible();
+    await expect(page.getByRole("timer")).toHaveText(/^\d+:\d\d$/);
+    await expect(card).toHaveCount(0);
+
+    // Cevap veritabanına yazılana kadar bekle (sayfadan erken çıkılırsa kayıt yarıda kalabilir).
+    await expect
+      .poll(
+        async () => {
+          const { data } = await serviceClient()
+            .from("card_progress")
+            .select("card_id, cards!inner(front)")
+            .eq("user_id", user.id)
+            .eq("cards.front", "kite");
+          return data?.length ?? 0;
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(1);
+
+    // Ana sayfa bu kartı "hazır" sayar: Start düğmesi kaybolmaz.
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: /Start studying/ })).toBeVisible();
   });
 });

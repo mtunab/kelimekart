@@ -113,6 +113,15 @@ export default function HelpPage() {
           </li>
           <li>By default you get 10 new cards a day plus the reviews that are due.</li>
           <li>
+            If you finish today&apos;s cards before your daily goal, more cards come automatically:
+            first new words, then words that are due soon.
+          </li>
+          <li>
+            A card you got wrong comes back after a short break (about 1&ndash;10 minutes), never
+            twice in a row. If only those cards are left, a countdown shows when the next one is
+            ready.
+          </li>
+          <li>
             A new day starts at 4:00 AM. Study at least one card every day to grow your streak (the
             flame); skip a day and it resets.
           </li>
