@@ -158,3 +158,40 @@ describe("yardımcılar", () => {
     ]);
   });
 });
+
+describe("DuoCards benzeri ilk adımlar (2 dk → 30 dk → 12 sa → FSRS)", () => {
+  it("yeni kelime: yanlış 2 dk, doğru 30 dk, sonra 12 sa, sonra en az 1 gün", () => {
+    expect(minutes(T0, review(newCard(), Rating.Again, T0).due)).toBe(2);
+
+    const first = review(newCard(), Rating.Good, T0);
+    expect(minutes(T0, first.due)).toBe(30);
+    expect(first.state).toBe(State.Learning);
+
+    const second = review(first, Rating.Good, first.due);
+    expect(minutes(first.due, second.due)).toBe(12 * 60);
+
+    const third = review(second, Rating.Good, second.due);
+    expect(third.state).toBe(State.Review);
+    expect(days(second.due, third.due)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("öğrenmedeyken yanlış bilinen kelime 2 dk'ya döner", () => {
+    const first = review(newCard(), Rating.Good, T0);
+    const again = review(first, Rating.Again, first.due);
+    expect(minutes(first.due, again.due)).toBe(2);
+  });
+
+  it("unutulan eski kelime: yanlış 2 dk, sonra doğru 30 dk, sonra yeniden günler", () => {
+    const { card, at } = graduate();
+    const forgot = review(card, Rating.Again, card.due > at ? card.due : at);
+    expect(forgot.state).toBe(State.Relearning);
+    const forgotAt = card.due > at ? card.due : at;
+    expect(minutes(forgotAt, forgot.due)).toBe(2);
+
+    const relearn = review(forgot, Rating.Good, forgot.due);
+    expect(minutes(forgot.due, relearn.due)).toBe(30);
+    const back = review(relearn, Rating.Good, relearn.due);
+    expect(back.state).toBe(State.Review);
+    expect(days(relearn.due, back.due)).toBeGreaterThanOrEqual(1);
+  });
+});

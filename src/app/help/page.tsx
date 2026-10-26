@@ -104,6 +104,10 @@ export default function HelpPage() {
             handles the rest.
           </li>
           <li>
+            A new word you know comes back after 30 minutes, then 12 hours, then after days or
+            weeks; the app picks the best day for each word from your answers.
+          </li>
+          <li>
             <strong>Flip:</strong> tap the card or press Space. Then drag the card: right = Good,
             left = Again (works with a mouse too). On a keyboard, 1–4 gives all four answers.
           </li>
@@ -117,9 +121,8 @@ export default function HelpPage() {
             first new words, then words that are due soon.
           </li>
           <li>
-            A card you got wrong comes back after a short break (about 1&ndash;10 minutes), never
-            twice in a row. If only those cards are left, a countdown shows when the next one is
-            ready.
+            A card you got wrong comes back after a short break (about 2 minutes), never twice in a
+            row. If only those cards are left, a countdown shows when the next one is ready.
           </li>
           <li>
             A new day starts at 4:00 AM. Study at least one card every day to grow your streak (the

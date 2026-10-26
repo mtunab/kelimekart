@@ -30,6 +30,8 @@ const scheduler = fsrs(
     request_retention: SRS_CONFIG.requestRetention,
     enable_fuzz: SRS_CONFIG.enableFuzz,
     maximum_interval: SRS_CONFIG.maximumIntervalDays,
+    learning_steps: SRS_CONFIG.learningSteps,
+    relearning_steps: SRS_CONFIG.relearningSteps,
   }),
 );
 

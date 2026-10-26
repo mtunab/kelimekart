@@ -223,9 +223,9 @@ test.describe("kısa akış (mobil 390px)", () => {
       await page.mouse.move(x + dx / 2, y, { steps: 5 });
       await page.mouse.move(x + dx, y, { steps: 5 });
       await page.mouse.up();
-      // Yeni kart (Tekrar da İyi de) öğrenme adımına girer ve dakikalar içinde yine gelir:
-      // her kaydırmada "yeni" bir azalır, "vadesi gelen" bir artar.
-      await expect(page.getByText(`${i + 1} due`, { exact: true })).toBeVisible();
+      // "Tekrar" (sola) 2 dk sonra döner, oturumda bekler; "İyi" (sağa) 30 dk sonra döner,
+      // oturumdan çıkar. Her kaydırmada "yeni" bir azalır, bekleyen yalnızca sola kaydırılan kart.
+      await expect(page.getByText("1 due", { exact: true })).toBeVisible();
       await expect(page.getByText(`${2 - i} new`, { exact: true })).toBeVisible();
     }
 
