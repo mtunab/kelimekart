@@ -128,7 +128,9 @@ test.describe("ana akış (masaüstü)", () => {
     await page.keyboard.press("Space");
     await expect(page.getByTestId("study-card")).toHaveAttribute("data-flipped", "true");
     // Puan düğmeleri yok; kaydırma ipucu aralıkları gösterir.
-    await expect(page.getByText(/← Again · \d+m/)).toBeVisible();
+    await expect(page.getByText("← Again", { exact: true })).toBeVisible();
+    // Çalışma ekranında süre görünmez (ör. "10m", "1d").
+    await expect(page.getByText(/\d+(m|h|d|mo|y)\b/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^(Again|Hard|Good|Easy)/ })).toHaveCount(0);
     await page.keyboard.press("4");
     await expect(page.getByText("9 new")).toBeVisible();
@@ -318,8 +320,8 @@ test.describe("geri sayım ve ana sayfa tutarlılığı (masaüstü)", () => {
     await page.keyboard.press("1"); // Again: ~1 dk sonra döner
 
     // Kart hemen tekrar gelmez; geri sayım görünür.
-    await expect(page.getByText("Next card in")).toBeVisible();
-    await expect(page.getByRole("timer")).toHaveText(/^\d+:\d\d$/);
+    await expect(page.getByText("Your next card is coming up in a moment.")).toBeVisible();
+    await expect(page.getByText(/\d+:\d\d/)).toHaveCount(0); // geri sayım yok
     await expect(card).toHaveCount(0);
 
     // Cevap veritabanına yazılana kadar bekle (sayfadan erken çıkılırsa kayıt yarıda kalabilir).

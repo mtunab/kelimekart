@@ -9,7 +9,7 @@ import {
   type Variants,
 } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ProgressBar } from "@/components/motion/progress-bar";
 import { FlameIcon, SpeakerIcon, UndoIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui/button";
@@ -137,7 +137,6 @@ export function StudySession({
   // Sunucuda false, tarayıcıda gerçek değer (hidrasyon uyumsuzluğu olmadan).
   const speechAvailable = useSyncExternalStore(noopSubscribe, canSpeak, () => false);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const [srs, setSrs] = useState<Srs | null>(null);
   const srsRef = useRef<Srs | null>(null);
   // Hesap modülü gelmeden verilen cevap kaybolmasın: modül gelince işlenir.
   const queuedRating = useRef<Grade | null>(null);
@@ -155,15 +154,6 @@ export function StudySession({
   const wantsExtra = !current && doneToday < dailyGoal && !extraExhausted;
   const waiting = !current && pick.kind === "wait" && !wantsExtra;
   const finished = !current && pick.kind === "empty" && !wantsExtra;
-
-  const previews = useMemo(() => {
-    if (!srs || !current || !flipped) return null;
-    const now = new Date();
-    const dues = srs.previewDueDates(srs.toFsrsCard(current.progress, now), now);
-    return Object.fromEntries(
-      srs.GRADES.map((g) => [g, srs.formatInterval(now, dues[g])]),
-    ) as Record<Grade, string>;
-  }, [srs, current, flipped]);
 
   const pushEntry = useCallback((entry: HistoryEntry) => {
     historyRef.current = [...historyRef.current, entry];
@@ -259,7 +249,6 @@ export function StudySession({
     void loadSrs().then((lib) => {
       if (!alive) return;
       srsRef.current = lib;
-      setSrs(lib);
       const queued = queuedRating.current;
       queuedRating.current = null;
       if (queued) answerRef.current(queued);
@@ -425,7 +414,6 @@ export function StudySession({
                 key={`${current.cardId}-${turn}`}
                 item={current}
                 flipped={flipped}
-                intervals={previews}
                 onFlip={() => setFlipped(true)}
                 onSwipe={answer}
               />
@@ -454,8 +442,9 @@ export function StudySession({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
                 >
-                  <span>← Again · {previews?.[1]}</span>
-                  <span>Good · {previews?.[3]} →</span>
+                  <span>← Again</span>
+                  <span className="text-ink-soft text-xs font-medium">swipe</span>
+                  <span>Good →</span>
                 </m.p>
               ) : (
                 <m.button
@@ -490,7 +479,6 @@ export function StudySession({
         </>
       ) : waiting && pick.kind === "wait" ? (
         <WaitPanel
-          secondsLeft={Math.max(1, Math.ceil((pick.until - now) / 1000))}
           waitingCount={queue.length}
           goalReached={doneToday >= dailyGoal}
           canUndo={lastUndoable}
@@ -572,18 +560,15 @@ export function StudySession({
 /**
  * Çevrilebilen kart. Ön yüz: kelime. Arka yüz: kelime + anlam + örnek + not.
  * Dokun/boşluk = 3B çevir. Çevrildikten sonra sürüklenebilir: sağa = İyi, sola = Tekrar.
- * Damgalarda kartın bir sonraki gösterim aralığı yazar.
  */
 function FlipCard({
   item,
   flipped,
-  intervals,
   onFlip,
   onSwipe,
 }: {
   item: QueueItem;
   flipped: boolean;
-  intervals: Record<Grade, string> | null;
   onFlip: () => void;
   onSwipe: (grade: Grade) => void;
 }) {
@@ -624,14 +609,14 @@ function FlipCard({
         style={{ opacity: againOpacity }}
         className="border-ink bg-red text-on-accent shadow-hard-sm pointer-events-none absolute top-4 right-4 z-10 rotate-12 rounded-lg border-[2.5px] px-2 py-0.5 text-sm font-bold"
       >
-        AGAIN{intervals ? <span className="ml-1 font-medium">{intervals[1]}</span> : null}
+        AGAIN
       </m.span>
       <m.span
         aria-hidden="true"
         style={{ opacity: goodOpacity }}
         className="border-ink bg-teal text-on-accent shadow-hard-sm pointer-events-none absolute top-4 left-4 z-10 -rotate-12 rounded-lg border-[2.5px] px-2 py-0.5 text-sm font-bold"
       >
-        GOOD{intervals ? <span className="ml-1 font-medium">{intervals[3]}</span> : null}
+        GOOD
       </m.span>
 
       <m.div
@@ -700,26 +685,23 @@ function Face({
 }
 
 /**
- * Sadece dönüş zamanını bekleyen kartlar kaldı: geri sayım. Süre dolunca kart kendiliğinden gelir.
+ * Sadece dönüş zamanını bekleyen kartlar kaldı: kısa mola. Süre gösterilmez (kullanıcı aralıklara
+ * kafa yormasın); zamanı gelince kart kendiliğinden gelir.
  * (Önceden kart beklemeden hemen tekrar gösteriliyor, iki kart arasında gidip geliniyordu.)
  */
 function WaitPanel({
-  secondsLeft,
   waitingCount,
   goalReached,
   canUndo,
   onUndo,
   backHref,
 }: {
-  secondsLeft: number;
   waitingCount: number;
   goalReached: boolean;
   canUndo: boolean;
   onUndo: () => void;
   backHref: string;
 }) {
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = String(secondsLeft % 60).padStart(2, "0");
   return (
     <m.section
       aria-labelledby="waiting"
@@ -730,14 +712,17 @@ function WaitPanel({
       <h1 id="waiting" className="text-2xl font-bold tracking-tight">
         {goalReached ? "Daily goal reached!" : "Short break"}
       </h1>
-      <p className="font-medium">Next card in</p>
-      <p
-        className="border-ink bg-yellow text-on-accent shadow-hard-sm rounded-xl border-[2.5px] px-4 py-1 text-4xl font-bold tabular-nums"
-        role="timer"
-        aria-live="off"
-      >
-        {minutes}:{seconds}
-      </p>
+      <p className="font-medium">Your next card is coming up in a moment.</p>
+      <div className="flex gap-2" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <m.span
+            key={i}
+            className="border-ink bg-yellow size-3 rounded-full border-2"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }}
+          />
+        ))}
+      </div>
       <p className="text-ink-soft text-sm">
         {waitingCount === 1 ? "1 card is" : `${waitingCount} cards are`} coming back after a short
         break, so you remember them better. You can wait here or come back later.

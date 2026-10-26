@@ -100,12 +100,8 @@ export default function HelpPage() {
         </div>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Under the card you&apos;ll see when it comes back for each answer. Be honest; the app
-            handles the rest.
-          </li>
-          <li>
-            A new word you know comes back after 30 minutes, then 12 hours, then after days or
-            weeks; the app picks the best day for each word from your answers.
+            Be honest; the app decides when each word comes back. Words you know come back less and
+            less often, words you miss come back sooner.
           </li>
           <li>
             <strong>Flip:</strong> tap the card or press Space. Then drag the card: right = Good,
@@ -121,8 +117,8 @@ export default function HelpPage() {
             first new words, then words that are due soon.
           </li>
           <li>
-            A card you got wrong comes back after a short break (about 2 minutes), never twice in a
-            row. If only those cards are left, a countdown shows when the next one is ready.
+            A card you got wrong comes back after a short break, never twice in a row. If only those
+            cards are left, wait a moment and the next one appears by itself.
           </li>
           <li>
             A new day starts at 4:00 AM. Study at least one card every day to grow your streak (the
