@@ -33,7 +33,8 @@ in your head, then flip the card and tell the app how well you remembered:
 | **Good**  | I remembered                  | Swipe right · key 3 |
 | **Easy**  | I knew it instantly           | Key 4               |
 
-- Be honest; the app decides when each word comes back. Every time you know a word it waits longer before coming back; a word you miss comes back a moment later in the same session, and then more often for a while.
+- Be honest; the app decides when each word comes back. A new word is asked three times in the same session (now, after ~20 seconds, after ~3 minutes); after that every time you know it, it waits longer (30 min, 4 hours, 1 day, 3 days, 1 week, 3 weeks, 2 months). A word you miss starts over: it comes back after ~20 seconds.
+- **Keep practicing:** when nothing is left (or you're waiting for a card), tap **Keep practicing** to go through all your words, weakest first, as long as you like. Great before an exam. Practicing a word early doesn't push it further away; missing it still starts it over.
 - **Flip:** tap the card or press **Space**. Then drag the card **right = Good**, **left = Again** (a mouse works too).
   On a keyboard, **1–4** gives all four answers.
 - **Listen** reads the word aloud. **Undo** (**Z** on a keyboard) takes back your last answer.

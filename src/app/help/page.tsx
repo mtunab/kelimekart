@@ -100,9 +100,15 @@ export default function HelpPage() {
         </div>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Be honest; the app decides when each word comes back. Every time you know a word it
-            waits longer before coming back; a word you miss comes back a moment later in the same
-            session, and then more often for a while.
+            Be honest; the app decides when each word comes back. A new word is asked three times in
+            the same session (now, after ~20 seconds, after ~3 minutes); after that every time you
+            know it, it waits longer (30 min, 4 hours, 1 day, 3 days, 1 week, 3 weeks, 2 months). A
+            word you miss starts over: it comes back after ~20 seconds.
+          </li>
+          <li>
+            <strong>Keep practicing:</strong> when nothing is left (or you&apos;re waiting for a
+            card), tap Keep practicing to go through all your words, weakest first, as long as you
+            like. Great before an exam. Practicing early doesn&apos;t push a word further away.
           </li>
           <li>
             <strong>Flip:</strong> tap the card or press Space. Then drag the card: right = Good,

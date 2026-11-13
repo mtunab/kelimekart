@@ -1,9 +1,9 @@
 /**
- * Tekrar hesabı: DuoCards'ın basamaklı sistemi (kurallar ve süreler `config.ts` içinde).
+ * Tekrar hesabı: basamaklı sistem (kurallar ve süreler `config.ts` içinde).
  * Hepsi SAF fonksiyon: zaman (`now`) dışarıdan verilir, yan etki yoktur.
  * Girdi ve çıktı doğrudan veritabanındaki `card_progress` satırının alanlarıdır; tarihler UTC (ISO).
  */
-import { DAY_MS, DROP_LEVELS, EARLY_GRACE_MS, LADDER_MS, MAX_LEVEL, RETRY_MS } from "./config";
+import { DAY_MS, EARLY_GRACE_MS, LADDER_MS, MAX_LEVEL, RETRY_MS } from "./config";
 
 export { LADDER_MS, MAX_LEVEL, RETRY_MS };
 
@@ -49,7 +49,7 @@ export function levelOf(row: ProgressFields | null): number {
 /**
  * Kartı verilen puanla cevaplar ve satırın yeni halini döndürür.
  *
- * - Bilmedim (1): iki basamak iner, 90 sn sonra tekrar sorulur.
+ * - Bilmedim (1): en başa (0) döner, 20 sn sonra tekrar sorulur.
  * - Zor (2): basamak değişmez, aynı süre bir kez daha beklenir.
  * - Bildim (3): bir basamak çıkar. Çok kolay (4): iki basamak çıkar.
  * - Zamanından önce (ek alıştırma olarak) bilinen kart basamak atlamaz, zamanı da değişmez.
@@ -83,7 +83,7 @@ export function review(row: ProgressFields | null, grade: Grade, now: Date): Pro
   let nextLevel: number;
   let waitMs: number;
   if (grade === Rating.Again) {
-    nextLevel = Math.max(0, level - DROP_LEVELS);
+    nextLevel = 0;
     waitMs = RETRY_MS;
   } else if (grade === Rating.Hard) {
     nextLevel = level;

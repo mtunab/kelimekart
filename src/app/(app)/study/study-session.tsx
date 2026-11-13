@@ -22,7 +22,7 @@ import {
   swipeGrade,
   type QueueSlot,
 } from "@/lib/study-queue";
-import { extraCards, sessionSummary, submitReview, undoReview } from "./actions";
+import { extraCards, practiceCards, sessionSummary, submitReview, undoReview } from "./actions";
 import type { QueueItem } from "./queue-item";
 import { canSpeak, speak } from "./speech";
 
@@ -45,6 +45,8 @@ function toSlot(item: QueueItem): Slot {
 
 /** Günlük hedefe ulaşılmadan liste biterse bir seferde istenen ek kart sayısı. */
 const EXTRA_BATCH = 5;
+/** Serbest tekrarda bir seferde istenen kart sayısı. */
+const PRACTICE_BATCH = 10;
 
 type HistoryEntry = {
   item: Slot;
@@ -124,6 +126,11 @@ export function StudySession({
   // Ek kart: istek sürüyor mu, kaynak tükendi mi?
   const fetchingExtra = useRef(false);
   const [extraExhausted, setExtraExhausted] = useState(false);
+  // Serbest tekrar: kullanıcı "Keep practicing" dedi mi, bu turda hangi kartlar istendi, kart kaldı mı?
+  const [practicing, setPracticing] = useState(false);
+  const fetchingPractice = useRef(false);
+  const practiceSeen = useRef<Set<string>>(new Set());
+  const [practiceExhausted, setPracticeExhausted] = useState(false);
   const [flipped, setFlipped] = useState(false);
   // Her gösterim için ayrı anahtar: aynı kart tekrar gelse de giriş/çıkış animasyonu çalışsın.
   const [turn, setTurn] = useState(0);
@@ -146,9 +153,11 @@ export function StudySession({
   const reviewLeft = queue.length - newLeft;
   const pendingCount = history.filter((h) => h.status === "pending").length;
   // Hedefe ulaşılmadıysa liste bitince (ya da sadece bekleyen kartlar kalınca) ek kart gelir.
-  const wantsExtra = !current && doneToday < dailyGoal && !extraExhausted;
-  const waiting = !current && pick.kind === "wait" && !wantsExtra;
-  const finished = !current && pick.kind === "empty" && !wantsExtra;
+  const wantsExtra = !current && !practicing && doneToday < dailyGoal && !extraExhausted;
+  // Serbest tekrarda hazır kart yoksa (bekleyen kartlar olsa da) sıradaki kartlar istenir.
+  const wantsPractice = !current && practicing && !practiceExhausted;
+  const waiting = !current && pick.kind === "wait" && !wantsExtra && !wantsPractice;
+  const finished = !current && pick.kind === "empty" && !wantsExtra && !wantsPractice;
 
   const pushEntry = useCallback((entry: HistoryEntry) => {
     historyRef.current = [...historyRef.current, entry];
@@ -170,7 +179,7 @@ export function StudySession({
       const answeredAt = new Date();
       const next = review(item.progress, rating, answeredAt);
       const nextDue = Date.parse(next.due);
-      // Birazdan dönecek kart (bilinmeyen ya da ilk kez bilinen: 90 sn) oturumda kalır.
+      // Birazdan dönecek kart (20 sn ya da 3 dk sonra) oturumda kalır; 30 dk'lık kart çıkar.
       const requeue = nextDue - answeredAt.getTime() <= LEARN_AHEAD_MS;
       // Gerçek zamanını bekler, araya en az MIN_GAP kart girer; zamanı gelince öne geçer.
       const optimistic: Slot = {
@@ -318,6 +327,51 @@ export function StudySession({
       });
   }, [wantsExtra, deckId, queue]);
 
+  // Serbest tekrar: en zayıf kartlardan başlayarak, kullanıcı bırakana kadar. Tüm kartlar bir kez
+  // sorulunca tur baştan başlar (az önce gösterilen kart hariç).
+  useEffect(() => {
+    if (!wantsPractice || fetchingPractice.current) return;
+    fetchingPractice.current = true;
+    const inQueue = queue.map((q) => q.cardId);
+    const lastShown = historyRef.current.at(-1)?.item.cardId;
+    const request = (exclude: string[]) =>
+      practiceCards({ deckId, exclude: [...new Set(exclude)], limit: PRACTICE_BATCH }).then(
+        (result) =>
+          result.ok ? result.items.filter((item) => !inQueue.includes(item.cardId)) : null,
+      );
+    (async () => {
+      let items = await request([...inQueue, ...practiceSeen.current]);
+      if (items && items.length === 0 && practiceSeen.current.size > 0) {
+        practiceSeen.current = new Set();
+        items = await request([...inQueue, ...(lastShown ? [lastShown] : [])]);
+      }
+      if (!items || items.length === 0) {
+        setPracticeExhausted(true);
+        return;
+      }
+      for (const item of items) practiceSeen.current.add(item.cardId);
+      // Vadesi gelmemiş olsa da hemen sorulur; sıra sunucudaki gibi (en zayıf önce) kalır.
+      const fresh = items;
+      setQueue((q) => [
+        ...q,
+        ...fresh.map((item) => ({ ...toSlot(item), availableAt: 0, urgent: false })),
+      ]);
+      setNow(Date.now());
+    })()
+      .catch(() => setPracticeExhausted(true))
+      .finally(() => {
+        fetchingPractice.current = false;
+      });
+  }, [wantsPractice, deckId, queue]);
+
+  const startPractice = useCallback(() => {
+    practiceSeen.current = new Set();
+    setPracticeExhausted(false);
+    setSummary(null);
+    setNotice(null);
+    setPracticing(true);
+  }, []);
+
   // Oturum bitince özet (yarının yükü) sunucudan alınır.
   useEffect(() => {
     if (!finished || pendingCount > 0 || summary) return;
@@ -344,6 +398,11 @@ export function StudySession({
           </span>
           {!finished ? (
             <span className="flex gap-1.5">
+              {practicing ? (
+                <span className="border-ink bg-yellow text-on-accent rounded-full border-2 px-2">
+                  practice
+                </span>
+              ) : null}
               <span className="border-ink bg-blue text-on-accent rounded-full border-2 px-2">
                 {reviewLeft} due
               </span>
@@ -458,9 +517,11 @@ export function StudySession({
           goalReached={doneToday >= dailyGoal}
           canUndo={lastUndoable}
           onUndo={undo}
+          onPractice={practiceExhausted ? null : startPractice}
+          saving={pendingCount > 0}
           backHref={backHref}
         />
-      ) : wantsExtra ? (
+      ) : wantsExtra || wantsPractice ? (
         <p role="status" className="text-ink-soft py-10 text-center font-bold">
           Loading more cards…
         </p>
@@ -485,6 +546,9 @@ export function StudySession({
           <h1 id="summary" className="text-3xl font-bold tracking-tight">
             {answered.length ? "Session complete!" : "Nothing to study right now"}
           </h1>
+          {practiceExhausted ? (
+            <p className="text-ink-soft">No cards to practice here yet. Add some words first.</p>
+          ) : null}
           {answered.length ? (
             <dl className="grid w-full grid-cols-3 gap-2">
               <Stat index={0} label="Cards" value={String(answered.length)} />
@@ -499,9 +563,9 @@ export function StudySession({
                 value={summary ? String(summary.tomorrowDue) : "…"}
               />
             </dl>
-          ) : (
+          ) : practiceExhausted ? null : (
             <p className="text-ink-soft">
-              There are no cards to study here right now. Add new words to keep learning.
+              Nothing is due right now. You can still practice your words before an exam.
             </p>
           )}
           {summary && summary.streak > 0 ? (
@@ -522,6 +586,11 @@ export function StudySession({
                 Undo last answer
               </button>
             ) : null}
+            {practiceExhausted ? null : (
+              <button type="button" className={buttonClass("secondary")} onClick={startPractice}>
+                Keep practicing
+              </button>
+            )}
             <Link href={backHref} className={buttonClass("primary")}>
               Done
             </Link>
@@ -669,12 +738,18 @@ function WaitPanel({
   goalReached,
   canUndo,
   onUndo,
+  onPractice,
+  saving,
   backHref,
 }: {
   waitingCount: number;
   goalReached: boolean;
   canUndo: boolean;
   onUndo: () => void;
+  /** Beklerken serbest tekrara geç; null ise düğme yok. */
+  onPractice: (() => void) | null;
+  /** Cevaplar hâlâ kaydediliyor: sayfadan çıkmadan önce kullanıcı görsün. */
+  saving: boolean;
   backHref: string;
 }) {
   return (
@@ -700,9 +775,15 @@ function WaitPanel({
       </div>
       <p className="text-ink-soft text-sm">
         {waitingCount === 1 ? "1 card is" : `${waitingCount} cards are`} coming back after a short
-        break, so you remember them better. You can wait here or come back later.
+        break, so you remember them better. You can wait here, keep practicing, or come back later.
       </p>
+      {saving ? <p className="text-ink-soft text-sm">Saving your answers…</p> : null}
       <div className="flex flex-wrap justify-center gap-2">
+        {onPractice ? (
+          <button type="button" className={buttonClass("secondary")} onClick={onPractice}>
+            Keep practicing
+          </button>
+        ) : null}
         {canUndo ? (
           <button type="button" className={buttonClass("secondary")} onClick={onUndo}>
             <UndoIcon size={18} />

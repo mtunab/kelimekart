@@ -56,15 +56,15 @@ describe.skipIf(!hasDevEnv)("istatistikler elle hesaplanan değerlerle eşleşir
     const id = (front: string) => cards.data!.find((c) => c.front === front)!.id as string;
 
     // Elle kurulan senaryo:
-    // c1 Bildim (öğreniliyor), c2 Bilmedim (öğreniliyor), c3 2 hafta aralıkta (5. basamak, olgun),
+    // c1 Bildim (öğreniliyor), c2 Bilmedim (öğreniliyor), c3 3 hafta aralıkta (8. basamak, olgun),
     // c4 Zor ama GERİ ALINDI → hiçbir sayıma girmez, kart yeni kalır.
     await answer(ayse, id("c1"), Rating.Good);
     await answer(ayse, id("c2"), Rating.Again);
     await answer(ayse, id("c3"), Rating.Easy, {
       state: 2,
-      learning_steps: 5,
-      scheduled_days: 14,
-      due: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+      learning_steps: 8,
+      scheduled_days: 21,
+      due: new Date(Date.now() + 21 * 86_400_000).toISOString(),
     });
     const undone = await answer(ayse, id("c4"), Rating.Hard);
     const undo = await ayse.client.rpc("undo_review", { p_log_id: undone });
@@ -143,12 +143,12 @@ describe.skipIf(!hasDevEnv)("istatistikler elle hesaplanan değerlerle eşleşir
     );
   });
 
-  it("vade tahmini: olgun kart ~14 gün sonra görünür", async () => {
+  it("vade tahmini: olgun kart ~21 gün sonra görünür", async () => {
     const { data } = await ayse.client.rpc("due_forecast", { p_days: 40 });
     const rows = data as { day: string; due_count: number }[];
     const total = rows.reduce((sum, r) => sum + Number(r.due_count), 0);
-    expect(total).toBe(3); // c1, c2 (90 sn içinde → bugün), c3 (14 gün sonra)
+    expect(total).toBe(3); // c1, c2 (20 sn içinde → bugün), c3 (21 gün sonra)
     expect(Number(rows[0]!.due_count)).toBe(2);
-    expect(rows.slice(12, 17).reduce((sum, r) => sum + Number(r.due_count), 0)).toBe(1);
+    expect(rows.slice(19, 24).reduce((sum, r) => sum + Number(r.due_count), 0)).toBe(1);
   });
 });

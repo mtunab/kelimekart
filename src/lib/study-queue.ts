@@ -1,7 +1,7 @@
 /**
  * Çalışma oturumunda sıradaki kartı seçen saf kurallar (tarih dışarıdan verilir, yan etki yok).
  *
- * - Bir kart dönüş zamanı (availableAt) gelmeden gösterilmez: bilinmeyen kart 90 sn bekler.
+ * - Bir kart dönüş zamanı (availableAt) gelmeden gösterilmez: bilinmeyen kart 20 sn bekler.
  * - Cevaplanan kart, araya en az MIN_GAP başka kart girmeden tekrar çıkmaz (gapLeft).
  * - Zamanı gelen "acil" kart (az önce bilinmeyen ya da kısa aralıktaki kart) SIRADAKİ diğer
  *   kartların önüne geçer. (Eskiden listenin sonuna ekleniyor, bilinmeyen kart ancak bütün
@@ -14,10 +14,10 @@
 export const MIN_GAP = 3;
 
 /**
- * Bu süre içinde dönecek kart oturumda kalır ve zamanı gelince tekrar gösterilir (90 sn'lik
- * kartlar). Veritabanındaki `is_study_ready()` aynı süreyi kullanır.
+ * Bu süre içinde dönecek kart oturumda kalır ve zamanı gelince tekrar gösterilir (20 sn ve 3 dk'lık
+ * kartlar; 30 dk'lık kart oturumdan çıkar). Veritabanındaki `is_study_ready()` aynı süreyi kullanır.
  */
-export const LEARN_AHEAD_MS = 2 * 60_000;
+export const LEARN_AHEAD_MS = 5 * 60_000;
 
 export type QueueSlot = {
   cardId: string;

@@ -116,7 +116,7 @@ test.describe("ana akış (masaüstü)", () => {
     expect(csv.split("\r\n").filter(Boolean)).toHaveLength(14);
 
     // Çalışma: günlük yeni limit 10 → 10 kart. Klavyeyle: Boşluk = çevir, 4 = Çok kolay
-    // (iki basamak çıkar: 30 dk sonra döner, oturumdan çıkar).
+    // (iki basamak çıkar: 3 dk sonra aynı oturumda tekrar sorulur).
     await page
       .getByRole("navigation", { name: "Deck actions" })
       .getByRole("link", { name: "Study" })
@@ -145,16 +145,17 @@ test.describe("ana akış (masaüstü)", () => {
       await expect(page.getByTestId("study-card")).toHaveAttribute("data-flipped", "true");
       await page.keyboard.press("4");
     }
-    await expect(page.getByRole("heading", { name: "Session complete!" })).toBeVisible();
-    await expect(page.getByText("100%")).toBeVisible();
-    await expect(page.getByText(/1-day streak/)).toBeVisible();
+    // Hedef (10) doldu; 10 kart 3 dk sonra tekrar sorulmak üzere bekliyor.
+    await expect(page.getByRole("heading", { name: "Daily goal reached!" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Keep practicing" })).toBeVisible();
+    await expect(page.getByText("Saving your answers…")).toHaveCount(0);
 
-    // Ana sayfa: bugünkü yeni kart hakkı bitti → "All caught up"; Desteler'de 3 yeni kart kaldı.
-    // Desteden başlanan oturumda "Done" desteye döner.
-    await page.getByRole("link", { name: "Done" }).click();
+    // Desteden başlanan oturumda "Done for now" desteye döner. Ana sayfada bekleyen kartlar
+    // "hazır" sayılır (birkaç dakika içinde dönecekler); Desteler'de 3 yeni kart kaldı.
+    await page.getByRole("link", { name: "Done for now" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "E2E Deck" })).toBeVisible();
     await page.goto("/");
-    await expect(page.getByText("All caught up!")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Start studying/ })).toBeVisible();
     await page.goto("/decks");
     await expect(page.getByText("3 new")).toBeVisible();
 
@@ -226,7 +227,7 @@ test.describe("kısa akış (mobil 390px)", () => {
       await page.mouse.move(x + dx / 2, y, { steps: 5 });
       await page.mouse.move(x + dx, y, { steps: 5 });
       await page.mouse.up();
-      // DuoCards kuralı: bilinmeyen kart da ilk kez bilinen kart da 90 sn sonra tekrar sorulur;
+      // Bilinmeyen kart da ilk kez bilinen kart da 20 sn sonra tekrar sorulur;
       // ikisi de oturumda bekler. Her kaydırmada "yeni" bir azalır, bekleyen bir artar.
       await expect(page.getByText(`${i + 1} due`, { exact: true })).toBeVisible();
       await expect(page.getByText(`${2 - i} new`, { exact: true })).toBeVisible();
@@ -280,11 +281,28 @@ test.describe("hedefe kadar devam ve bekleme (masaüstü)", () => {
     // 2 yeni kelime (günlük sınır) + 4 yeni kelime (sınırın ötesinde, kendiliğinden) = 6 farklı kart.
     expect(new Set(seen).size).toBe(6);
     for (let i = 1; i < seen.length; i++) expect(seen[i]).not.toBe(seen[i - 1]);
-    await expect(page.getByRole("heading", { name: "Session complete!" })).toBeVisible();
+    // Hedef doldu; 6 kart birkaç dakika sonra tekrar sorulmak üzere bekliyor.
+    await expect(page.getByRole("heading", { name: "Daily goal reached!" })).toBeVisible();
     await expect(page.getByText("Goal 6 / 6")).toBeVisible();
-    await expect(page.locator("dl > div").filter({ hasText: "Cards" }).locator("dd")).toHaveText(
-      "6",
-    );
+
+    // Desteye 2 kelime daha eklenir (sırayla). Serbest tekrar, oturumda bekleyen kartlar
+    // dışındakileri hemen getirir: önce çalışılmış kartlar, en sonda yeni kelimeler.
+    const deckId = new URL(page.url()).searchParams.get("deck")!;
+    for (const [front, back] of WORDS.slice(6, 8)) {
+      const { error } = await serviceClient()
+        .from("cards")
+        .insert({ deck_id: deckId, front, back, created_by: user.id });
+      expect(error).toBeNull();
+    }
+    await page.getByRole("button", { name: "Keep practicing" }).click();
+    await expect(card).toBeVisible();
+    await expect(page.getByText("practice", { exact: true })).toBeVisible();
+    await expect(card.locator("p").first()).toHaveText("green");
+    await page.keyboard.press("Space");
+    await expect(card).toHaveAttribute("data-flipped", "true");
+    await page.keyboard.press("3");
+    await expect(card.locator("p").first()).toHaveText("house");
+    await expect(page.getByText("Goal 7 / 6")).toBeVisible();
     // Cevapların hepsi sunucuya yazıldı (sonraki test aynı kullanıcıyla devam ediyor).
     await expect(page.getByText("Saving your answers…")).toHaveCount(0);
   });
@@ -318,7 +336,7 @@ test.describe("geri sayım ve ana sayfa tutarlılığı (masaüstü)", () => {
     await expect(card).toBeVisible();
     await page.keyboard.press("Space");
     await expect(card).toHaveAttribute("data-flipped", "true");
-    await page.keyboard.press("1"); // Bilmedim: 90 sn sonra döner
+    await page.keyboard.press("1"); // Bilmedim: 20 sn sonra döner
 
     // Kart hemen tekrar gelmez; geri sayım görünür.
     await expect(page.getByText("Your next card is coming up in a moment.")).toBeVisible();
@@ -357,10 +375,10 @@ test.describe("bilinmeyen kart liste bitmeden geri gelir (masaüstü)", () => {
     await deleteTestUsers([user]);
   });
 
-  test("bilinmeyen kart 90 sn sonra, sıradaki yeni kartların önüne geçerek tekrar sorulur", async ({
+  test("bilinmeyen kart 20 sn sonra, sıradaki yeni kartların önüne geçerek tekrar sorulur", async ({
     page,
   }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(150_000);
     await login(page, user.username, user.password);
     await expect(page.getByRole("heading", { name: /^Hi, Ece/ })).toBeVisible();
     await createDeck(page, "Return Deck");
@@ -393,19 +411,20 @@ test.describe("bilinmeyen kart liste bitmeden geri gelir (masaüstü)", () => {
     await expect(page.getByText("4 new", { exact: true })).toBeVisible();
     expect(await front()).not.toBe(failed);
 
-    // 90 sn dolunca, sırada 3 yeni kart daha beklerken bilinmeyen kart öne geçer.
-    await page.waitForTimeout(92_000);
+    // 20 sn dolunca, sırada 3 yeni kart daha beklerken bilinmeyen kart öne geçer.
+    await page.waitForTimeout(22_000);
     await answer("4");
     await expect(page.getByText("3 new", { exact: true })).toBeVisible();
     await expect(card.locator("p").first()).toHaveText(failed);
     await expect(card.getByText("new", { exact: true })).toHaveCount(0);
 
-    // Bu kez bilindi (3): bir basamak çıkar ve yine 90 sn sonra sorulmak üzere oturumda kalır.
+    // Bu kez bilindi (3): bir basamak çıkar ve yine 20 sn sonra sorulmak üzere oturumda kalır.
+    // Bekleyenler: "çok kolay" denen 4 kart (3 dk) + bu kart = 5.
     await answer("3");
-    await expect(page.getByText("1 due", { exact: true })).toBeVisible();
+    await expect(page.getByText("5 due", { exact: true })).toBeVisible();
     expect(await front()).not.toBe(failed);
 
-    // Veritabanında: kart 1. basamakta ve yaklaşık 90 sn sonraya planlı.
+    // Veritabanında: kart 1. basamakta ve yaklaşık 20 sn sonraya planlı.
     await expect
       .poll(
         async () => {

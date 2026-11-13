@@ -114,8 +114,8 @@ describe.skipIf(!hasDevEnv)("çalışma akışı: ana sayfa sayıları ve ek kar
     ).toEqual([ids.charlie]);
   });
 
-  it("90 sn sonra dönecek bilinmeyen kart ana sayfada da 'hazır' sayılır (Start kaybolmaz)", async () => {
-    // "Bilmedim": kart 90 sn sonra döner ve en alt basamakta kalır.
+  it("20 sn sonra dönecek bilinmeyen kart ana sayfada da 'hazır' sayılır (Start kaybolmaz)", async () => {
+    // "Bilmedim": kart 20 sn sonra döner ve en alt basamakta kalır.
     await answer(ayse, ids.alpha!, 1);
     const { data: row } = await ayse.client
       .from("card_progress")
@@ -124,8 +124,8 @@ describe.skipIf(!hasDevEnv)("çalışma akışı: ana sayfa sayıları ve ek kar
       .single();
     expect(row).toMatchObject({ learning_steps: 0, state: 1 });
     const waitMs = Date.parse(row!.due as string) - Date.now();
-    expect(waitMs).toBeGreaterThan(60_000);
-    expect(waitMs).toBeLessThanOrEqual(90_000);
+    expect(waitMs).toBeGreaterThan(5_000);
+    expect(waitMs).toBeLessThanOrEqual(20_000);
 
     const q = await queue();
     expect(q.some((r) => r.card_id === ids.alpha && !r.is_new)).toBe(true);
@@ -134,14 +134,14 @@ describe.skipIf(!hasDevEnv)("çalışma akışı: ana sayfa sayıları ve ek kar
   });
 
   it("vadesi günler sonra olan kart hazır sayılmaz; ek kart olarak erken tekrar edilebilir", async () => {
-    // bravo 4. basamakta: 2 gün sonra dönecek.
+    // bravo 6. basamakta: 3 gün sonra dönecek.
     await answer(ayse, ids.bravo!, 3, {
       state: 2,
-      learning_steps: 4,
-      scheduled_days: 2,
-      due: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+      learning_steps: 6,
+      scheduled_days: 3,
+      due: new Date(Date.now() + 3 * 86_400_000).toISOString(),
     });
-    expect(await homeDueCount()).toBe(1); // yalnızca 90 sn'lik alpha
+    expect(await homeDueCount()).toBe(1); // yalnızca 20 sn'lik alpha
     expect((await queue()).some((r) => r.card_id === ids.bravo)).toBe(false);
 
     // Yeni kelimeler oturumda görülmüş sayılınca sıra erken tekrara gelir; öğrenmedeki kart gelmez.
@@ -150,7 +150,7 @@ describe.skipIf(!hasDevEnv)("çalışma akışı: ana sayfa sayıları ve ek kar
     expect(ahead[0]!.is_new).toBe(false);
   });
 
-  it("erken tekrar edilen kart bilinse de basamak atlamaz, zamanı değişmez; bilinmezse iner", async () => {
+  it("erken tekrar edilen kart bilinse de basamak atlamaz, zamanı değişmez; bilinmezse en başa döner", async () => {
     const read = async () =>
       (
         await ayse.client
@@ -165,15 +165,53 @@ describe.skipIf(!hasDevEnv)("çalışma akışı: ana sayfa sayıları ve ek kar
 
     await answer(ayse, ids.bravo!, 1);
     const failed = await read();
-    expect(failed).toMatchObject({ learning_steps: 2, state: 1 });
-    expect(Date.parse(failed.due as string) - Date.now()).toBeLessThanOrEqual(90_000);
+    expect(failed).toMatchObject({ learning_steps: 0, state: 1 });
+    expect(Date.parse(failed.due as string) - Date.now()).toBeLessThanOrEqual(20_000);
   });
 
-  it("30 dk bekleyen kart hazır sayılmaz: ne kuyruğa girer ne ana sayfada görünür", async () => {
+  it("3 dk bekleyen kart oturumda kalır; 30 dk bekleyen kart hazır sayılmaz", async () => {
     const dueBefore = await homeDueCount();
-    await answer(ayse, ids.charlie!, 4); // yeni kart, "çok kolay": 2. basamak, 30 dk
+    await answer(ayse, ids.charlie!, 4); // yeni kart, "çok kolay": 2. basamak, 3 dk
+    expect((await queue()).some((r) => r.card_id === ids.charlie)).toBe(true);
+    expect(await homeDueCount()).toBe(dueBefore + 1);
+
+    // 3. basamak: 30 dk sonra dönecek → ne kuyrukta ne ana sayfada.
+    await answer(ayse, ids.charlie!, 3, {
+      learning_steps: 3,
+      due: new Date(Date.now() + 30 * 60_000).toISOString(),
+    });
     expect((await queue()).some((r) => r.card_id === ids.charlie)).toBe(false);
     expect(await homeDueCount()).toBe(dueBefore);
+  });
+
+  it("serbest tekrar: tüm kartlar vadesine bakılmadan, en zayıftan başlayarak; yeni kelimeler en sonda", async () => {
+    const practice = async (exclude: string[]) => {
+      const { data, error } = await ayse.client.rpc("get_practice_cards", {
+        p_deck_id: deckId,
+        p_exclude: exclude,
+        p_limit: 10,
+      });
+      if (error) throw new Error(error.message);
+      return data as Row[];
+    };
+    // alpha ve bravo en altta (alpha'nın vadesi daha yakın), charlie 3. basamakta, delta hiç görülmedi.
+    const all = await practice([]);
+    expect(all.map((r) => r.card_id)).toEqual([ids.alpha, ids.bravo, ids.charlie, ids.delta]);
+    expect(all.map((r) => r.is_new)).toEqual([false, false, false, true]);
+    expect((await practice([ids.alpha!, ids.charlie!])).map((r) => r.card_id)).toEqual([
+      ids.bravo,
+      ids.delta,
+    ]);
+
+    // Başkasının kartı hiç gelmez; girişsiz istek çağıramaz.
+    const { data } = await ayse.client.rpc("get_practice_cards", {
+      p_deck_id: null,
+      p_exclude: [],
+      p_limit: 50,
+    });
+    expect((data as Row[]).some((r) => r.card_id === barisCardId)).toBe(false);
+    const anon = await anonClient().rpc("get_practice_cards", { p_exclude: [], p_limit: 5 });
+    expect(anon.error).not.toBeNull();
   });
 
   it("ek kartlar başkasının destesinden asla gelmez; girişsiz istek çağıramaz", async () => {

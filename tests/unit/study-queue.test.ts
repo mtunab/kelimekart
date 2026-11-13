@@ -59,9 +59,9 @@ describe("sıradaki kartı seçme", () => {
   });
 });
 
-const RETRY = 90_000;
+const RETRY = 20_000;
 
-/** Oturumu taklit eder: bilinmeyen kart 90 sn sonraya (acil olarak) döner, bilinen çıkar. */
+/** Oturumu taklit eder: bilinmeyen kart 20 sn sonraya (acil olarak) döner, bilinen çıkar. */
 function simulate(cards: string[], again: Set<string>, steps: number) {
   let queue = cards.map((id) => slot(id));
   let now = 0;
@@ -96,7 +96,7 @@ describe("oturum taklidi (videodaki durum)", () => {
     const { shown, times } = simulate(["refrain", "exploit"], new Set(["refrain", "exploit"]), 20);
     expect(shown.length).toBeGreaterThan(4);
     for (let i = 1; i < shown.length; i++) expect(shown[i]).not.toBe(shown[i - 1]);
-    // Aynı kartın iki görünüşü arasında en az 90 sn geçer (eskiden ~5 saniyede geri geliyordu).
+    // Aynı kartın iki görünüşü arasında en az 20 sn geçer (eskiden ~5 saniyede geri geliyordu).
     const lastSeen = new Map<string, number>();
     shown.forEach((id, i) => {
       const before = lastSeen.get(id);
@@ -112,7 +112,7 @@ describe("oturum taklidi (videodaki durum)", () => {
     expect(second - first - 1).toBeGreaterThanOrEqual(MIN_GAP);
   });
 
-  it("uzun listede bilinmeyen kart liste bitmeden, 90 sn dolar dolmaz geri gelir", () => {
+  it("uzun listede bilinmeyen kart liste bitmeden, 20 sn dolar dolmaz geri gelir", () => {
     // 40 kart, her biri ~5 sn. İlk kart bilinmedi (bir kez); eskiden 39 kartın hepsinden sonra
     // (3 dakikadan fazla) geliyordu.
     const cards = Array.from({ length: 40 }, (_, i) => `k${i}`);

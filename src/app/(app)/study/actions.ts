@@ -108,3 +108,20 @@ export async function extraCards(input: unknown): Promise<ExtraCardsResult> {
   if (error) return { ok: false };
   return { ok: true, items: ((data ?? []) as QueueRow[]).map(toQueueItem) };
 }
+
+/**
+ * Serbest tekrar ("Keep practicing"): vadesine bakılmadan, en zayıf kartlardan başlayarak.
+ * Zamanından önce bilinen kart basamak atlamaz (hesap kuralı), bilinmeyen en başa döner.
+ */
+export async function practiceCards(input: unknown): Promise<ExtraCardsResult> {
+  const parsed = extraCardsInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("get_practice_cards", {
+    p_deck_id: parsed.data.deckId,
+    p_exclude: parsed.data.exclude,
+    p_limit: parsed.data.limit,
+  });
+  if (error) return { ok: false };
+  return { ok: true, items: ((data ?? []) as QueueRow[]).map(toQueueItem) };
+}

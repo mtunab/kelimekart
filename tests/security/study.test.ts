@@ -181,7 +181,7 @@ describe.skipIf(!hasDevEnv)("içe aktarma, arama, kuyruk ve günlük sayılar", 
       const one = await cardIdByFront("one");
       const two = await cardIdByFront("two");
       await answer(ayse, one, Rating.Easy, new Date(Date.now() - 60_000)); // hemen vadesi gelsin
-      await answer(ayse, two, Rating.Easy); // 30 dk sonra: henüz hazır değil
+      await answer(ayse, two, Rating.Easy, new Date(Date.now() + 2 * 86_400_000)); // günler sonra
 
       const { data } = await ayse.client.rpc("get_study_queue", { p_deck_id: deckId });
       const rowsQ = data as QueueRow[];
