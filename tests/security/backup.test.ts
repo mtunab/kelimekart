@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { fromFsrsCard, Rating, review, toFsrsCard } from "@/lib/srs";
+import { Rating, review } from "@/lib/srs";
 import { createBackup, restoreBackup, type Backup } from "../../scripts/lib/backup";
 import {
   assertNotProd,
@@ -27,7 +27,7 @@ async function answer(user: TestUser, cardId: string) {
       p_rating: Rating.Good,
       p_reviewed_at: now.toISOString(),
       p_expected_version: row?.version ?? 0,
-      p_next: fromFsrsCard(review(toFsrsCard(row, now), Rating.Good, now)),
+      p_next: review(row, Rating.Good, now),
     }),
   );
   if (error) throw new Error(error.message);

@@ -100,8 +100,9 @@ export default function HelpPage() {
         </div>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            Be honest; the app decides when each word comes back. Words you know come back less and
-            less often, words you miss come back sooner.
+            Be honest; the app decides when each word comes back. Every time you know a word it
+            waits longer before coming back; a word you miss comes back a moment later in the same
+            session, and then more often for a while.
           </li>
           <li>
             <strong>Flip:</strong> tap the card or press Space. Then drag the card: right = Good,

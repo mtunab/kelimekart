@@ -13,8 +13,15 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { ProgressBar } from "@/components/motion/progress-bar";
 import { FlameIcon, SpeakerIcon, UndoIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui/button";
-import type { Grade } from "@/lib/srs";
-import { countGap, MIN_GAP, pickNext, type QueueSlot } from "@/lib/study-queue";
+import { review, State, type Grade } from "@/lib/srs";
+import {
+  countGap,
+  LEARN_AHEAD_MS,
+  MIN_GAP,
+  pickNext,
+  swipeGrade,
+  type QueueSlot,
+} from "@/lib/study-queue";
 import { extraCards, sessionSummary, submitReview, undoReview } from "./actions";
 import type { QueueItem } from "./queue-item";
 import { canSpeak, speak } from "./speech";
@@ -22,10 +29,18 @@ import { canSpeak, speak } from "./speech";
 /** Oturumdaki kart: dönüş zamanı ve "araya girecek kart" sayacıyla. */
 type Slot = QueueItem & QueueSlot;
 
-/** Öğrenme adımındaki kart (ilk cevapta) hemen gösterilebilir; sonra gerçek zamanını bekler. */
+/**
+ * Sunucudan gelen kart: zamanı gelmemişse (birazdan dönecek kısa aralıklı kart) zamanını bekler.
+ * Kısa aralıktaki kart "acil"dir: zamanı gelince yeni ve tekrar kartlarının önüne geçer.
+ */
 function toSlot(item: QueueItem): Slot {
   const due = item.progress ? Date.parse(item.progress.due) : 0;
-  return { ...item, availableAt: Number.isFinite(due) ? due : 0, gapLeft: 0 };
+  return {
+    ...item,
+    availableAt: Number.isFinite(due) ? due : 0,
+    gapLeft: 0,
+    urgent: item.progress !== null && item.progress.state !== State.Review,
+  };
 }
 
 /** Günlük hedefe ulaşılmadan liste biterse bir seferde istenen ek kart sayısı. */
@@ -42,11 +57,6 @@ type HistoryEntry = {
 
 /** Kartın çıkış yönü: Again sola, Hard/Good sağa, Easy yukarı. */
 type ExitDir = { x: number; y: number };
-
-/** Öğrenme adımındaki kart bu süre içinde vadesi gelecekse oturumda (zamanı gelince) tekrar gösterilir. */
-const LEARN_AHEAD_MS = 20 * 60_000;
-const SWIPE_DISTANCE = 100;
-const SWIPE_VELOCITY = 600;
 
 const EXIT_BY_GRADE: Record<Grade, ExitDir> = {
   1: { x: -1, y: 0 },
@@ -70,17 +80,6 @@ const cardVariants: Variants = {
     transition: { duration: 0.28, ease: "easeIn" },
   }),
 };
-
-type Srs = typeof import("@/lib/srs");
-let srsModule: Promise<Srs> | null = null;
-
-/**
- * Tekrar hesabı (ts-fsrs) ilk yükte inmez: sayfa açılınca arka planda yüklenir, kart
- * çevrilene kadar hazır olur. Böylece çalışma ekranı daha hızlı açılır.
- */
-function loadSrs() {
-  return (srsModule ??= import("@/lib/srs"));
-}
 
 /** Ağ hatasında aynı olay kimliğiyle yeniden dener (sunucu tarafı idempotent). */
 async function submitWithRetry(input: { cardId: string; rating: Grade; clientEventId: string }) {
@@ -137,10 +136,6 @@ export function StudySession({
   // Sunucuda false, tarayıcıda gerçek değer (hidrasyon uyumsuzluğu olmadan).
   const speechAvailable = useSyncExternalStore(noopSubscribe, canSpeak, () => false);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const srsRef = useRef<Srs | null>(null);
-  // Hesap modülü gelmeden verilen cevap kaybolmasın: modül gelince işlenir.
-  const queuedRating = useRef<Grade | null>(null);
-  const answerRef = useRef<(rating: Grade) => void>(() => undefined);
 
   const pick = pickNext(queue, now, lastCardId);
   const current = pick.kind === "card" ? queue[pick.index] : undefined;
@@ -171,22 +166,20 @@ export function StudySession({
   const answer = useCallback(
     (rating: Grade) => {
       if (!current || !flipped) return;
-      const lib = srsRef.current;
-      if (!lib) {
-        queuedRating.current = rating;
-        return;
-      }
       const item = current;
       const answeredAt = new Date();
-      const next = lib.review(lib.toFsrsCard(item.progress, answeredAt), rating, answeredAt);
-      const requeue = next.due.getTime() - answeredAt.getTime() <= LEARN_AHEAD_MS;
-      // Tekrar gelecekse gerçek zamanını bekler ve araya en az MIN_GAP kart girer.
+      const next = review(item.progress, rating, answeredAt);
+      const nextDue = Date.parse(next.due);
+      // Birazdan dönecek kart (bilinmeyen ya da ilk kez bilinen: 90 sn) oturumda kalır.
+      const requeue = nextDue - answeredAt.getTime() <= LEARN_AHEAD_MS;
+      // Gerçek zamanını bekler, araya en az MIN_GAP kart girer; zamanı gelince öne geçer.
       const optimistic: Slot = {
         ...item,
         isNew: false,
-        progress: lib.fromFsrsCard(next),
-        availableAt: next.due.getTime(),
+        progress: next,
+        availableAt: nextDue,
         gapLeft: MIN_GAP,
+        urgent: true,
       };
 
       setExitDir(EXIT_BY_GRADE[rating]);
@@ -239,24 +232,6 @@ export function StudySession({
     },
     [current, flipped, pushEntry, updateEntry],
   );
-
-  useEffect(() => {
-    answerRef.current = answer;
-  }, [answer]);
-
-  useEffect(() => {
-    let alive = true;
-    void loadSrs().then((lib) => {
-      if (!alive) return;
-      srsRef.current = lib;
-      const queued = queuedRating.current;
-      queuedRating.current = null;
-      if (queued) answerRef.current(queued);
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   const undo = useCallback(() => {
     const index = historyRef.current.findLastIndex(
@@ -596,8 +571,8 @@ function FlipCard({
       dragSnapToOrigin
       dragElastic={0.7}
       onDragEnd={(_, info) => {
-        if (info.offset.x > SWIPE_DISTANCE || info.velocity.x > SWIPE_VELOCITY) onSwipe(3);
-        else if (info.offset.x < -SWIPE_DISTANCE || info.velocity.x < -SWIPE_VELOCITY) onSwipe(1);
+        const grade = swipeGrade(info.offset.x, info.velocity.x);
+        if (grade) onSwipe(grade);
       }}
       onTap={() => {
         if (!flipped) onFlip();

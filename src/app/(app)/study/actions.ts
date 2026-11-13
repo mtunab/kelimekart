@@ -1,7 +1,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth";
-import { fromFsrsCard, review, toFsrsCard, type ProgressFields } from "@/lib/srs";
+import { review, type ProgressFields } from "@/lib/srs";
 import { extraCardsInputSchema, reviewInputSchema, undoInputSchema } from "@/lib/validation/study";
 import { toQueueItem, type QueueItem, type QueueRow } from "./queue-item";
 
@@ -13,7 +13,7 @@ type ProgressRow = ProgressFields & { version: number };
 
 /**
  * Cevabı işler. İstemciden yalnızca cardId, rating, clientEventId gelir.
- * Sunucu mevcut durumu okur, ts-fsrs ile yeni durumu hesaplar; veritabanı fonksiyonu
+ * Sunucu mevcut durumu okur, basamak kurallarıyla yeni durumu hesaplar; veritabanı fonksiyonu
  * ilerleme güncellemesi + kayıt eklemeyi tek işlemde yapar. Aynı clientEventId tekrar
  * gelirse hiçbir şey değişmez.
  */
@@ -35,8 +35,7 @@ export async function submitReview(input: unknown): Promise<SubmitReviewResult> 
     if (readError) return { ok: false, error: "Couldn't save your answer." };
 
     const now = new Date();
-    const next = review(toFsrsCard(row, now), rating, now);
-    const nextFields = fromFsrsCard(next);
+    const nextFields = review(row, rating, now);
 
     const { data, error } = await supabase.rpc("apply_review", {
       p_card_id: cardId,

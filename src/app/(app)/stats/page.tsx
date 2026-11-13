@@ -121,7 +121,7 @@ export default async function StatsPage() {
           </div>
         )}
         <p className="text-ink-soft text-xs">
-          Mature: cards reviewed at intervals of 21 days or more.
+          Mature: cards you know well — they come back every 2 weeks or more.
         </p>
       </section>
 

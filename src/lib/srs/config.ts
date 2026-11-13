@@ -1,16 +1,40 @@
 /**
- * FSRS ayarlarının tek yeri.
- * - Hedef hatırlama oranı %90: bir kart vadesi geldiğinde %90 ihtimalle hatırlanmalı.
- * - Bulanıklaştırma (fuzz) açık: aynı gün eklenen kartların hepsi aynı güne yığılmasın.
- * - İlk adımlar DuoCards'a benzer (onun merdiveni: 90 sn → 30 dk → 12 sa → 2 gün → …).
- *   Kütüphane yalnızca tam dakika kabul ettiği için 90 sn yerine 2 dk. Yeni kelimede:
- *   yanlış → 2 dk, doğru → 30 dk → 12 sa → sonrasını FSRS kişiye göre (gün/hafta) hesaplar.
- *   Unutulan eski kelimede: yanlış → 2 dk, doğru → 30 dk → yeniden FSRS.
+ * Tekrar kurallarının tek yeri: DuoCards'ın basamaklı (Leitner benzeri) sistemi.
+ *
+ * Her kartın bir basamağı var (0 = en alt). Kart bilinince bir basamak çıkar ve o basamağın
+ * süresi kadar bekler; bilinmeyince iki basamak iner ve hemen (90 sn sonra) tekrar sorulur.
+ *
+ *   basamak:   1       2       3       4       5        6
+ *   bekleme:  90 sn   30 dk   12 sa   2 gün   2 hafta  2 ay
+ *
+ * Kaynak: DuoCards'ın kendi yardım sayfası ("How does DuoCards' algorithm work?").
+ * En üst basamaktaki kart bilindikçe 2 ayda bir gelmeye devam eder.
  */
-export const SRS_CONFIG = {
-  requestRetention: 0.9,
-  enableFuzz: true,
-  maximumIntervalDays: 3650,
-  learningSteps: ["2m", "30m", "12h"],
-  relearningSteps: ["2m", "30m"],
-} as const;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+export const DAY_MS = 24 * HOUR;
+
+/** LADDER_MS[i] = (i + 1). basamağa çıkan kartın bekleme süresi. */
+export const LADDER_MS = [
+  90 * SECOND,
+  30 * MINUTE,
+  12 * HOUR,
+  2 * DAY_MS,
+  14 * DAY_MS,
+  60 * DAY_MS,
+] as const;
+
+export const MAX_LEVEL = LADDER_MS.length;
+
+/** Bilinmeyen kart bu kadar sonra tekrar sorulur. */
+export const RETRY_MS = 90 * SECOND;
+
+/** Bilinmeyen kart kaç basamak iner ("a level or two"). */
+export const DROP_LEVELS = 2;
+
+/**
+ * Kart zamanından bu kadar önce cevaplanırsa "erken tekrar" sayılmaz (saat farkı payı).
+ * Daha erken bilinirse basamak atlamaz: ek alıştırma takvimi öne çekmesin.
+ */
+export const EARLY_GRACE_MS = 5 * MINUTE;

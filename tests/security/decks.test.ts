@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { studyDay } from "@/lib/dates";
-import { fromFsrsCard, Rating, review, toFsrsCard, type Grade } from "@/lib/srs";
+import { Rating, review, type Grade } from "@/lib/srs";
 import {
   anonClient,
   assertNotProd,
@@ -23,14 +23,13 @@ async function applyReview(
     user.client.from("card_progress").select("*").eq("card_id", cardId).maybeSingle(),
   );
   const now = new Date();
-  const next = review(toFsrsCard(row, now), grade, now);
   return user.client.rpc("apply_review", {
     p_card_id: cardId,
     p_client_event_id: opts.eventId ?? crypto.randomUUID(),
     p_rating: grade,
     p_reviewed_at: now.toISOString(),
     p_expected_version: opts.expectedVersion ?? row?.version ?? 0,
-    p_next: fromFsrsCard(next),
+    p_next: review(row, grade, now),
   });
 }
 
@@ -348,13 +347,13 @@ describe.skipIf(!hasDevEnv)("desteler, kartlar ve kişiye özel ilerleme (RLS)",
         .select("*")
         .eq("card_id", cardId)
         .single();
-      const fsrsFields = (row: Record<string, unknown>) => {
+      const progressFields = (row: Record<string, unknown>) => {
         const copy = { ...row };
         delete copy.version;
         delete copy.updated_at;
         return copy;
       };
-      expect(fsrsFields(after.data!)).toEqual(fsrsFields(before.data!));
+      expect(progressFields(after.data!)).toEqual(progressFields(before.data!));
       expect(after.data!.version).toBe(before.data!.version + 2);
 
       const log = await owner.client.from("review_logs").select("id").eq("id", logId);

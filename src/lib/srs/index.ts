@@ -1,41 +1,27 @@
 /**
- * ts-fsrs sarmalayıcı. Hepsi SAF fonksiyon: zaman (`now`) dışarıdan verilir, yan etki yoktur.
- * Veritabanı satırı ↔ ts-fsrs `Card` dönüşümü de burada. Tarihler UTC (ISO) saklanır.
+ * Tekrar hesabı: DuoCards'ın basamaklı sistemi (kurallar ve süreler `config.ts` içinde).
+ * Hepsi SAF fonksiyon: zaman (`now`) dışarıdan verilir, yan etki yoktur.
+ * Girdi ve çıktı doğrudan veritabanındaki `card_progress` satırının alanlarıdır; tarihler UTC (ISO).
  */
-import {
-  createEmptyCard,
-  fsrs,
-  generatorParameters,
-  Rating,
-  State,
-  type Card,
-  type Grade,
-} from "ts-fsrs";
-import { SRS_CONFIG } from "./config";
+import { DAY_MS, DROP_LEVELS, EARLY_GRACE_MS, LADDER_MS, MAX_LEVEL, RETRY_MS } from "./config";
 
-export { Rating, State };
-export type { Card, Grade };
+export { LADDER_MS, MAX_LEVEL, RETRY_MS };
+
+/** Cevap: 1 bilmedim, 2 zor bildim, 3 bildim, 4 çok kolay. Telefonda yalnızca 1 ve 3 var. */
+export type Grade = 1 | 2 | 3 | 4;
+
+export const Rating = { Again: 1, Hard: 2, Good: 3, Easy: 4 } as const;
 
 export const GRADES = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const;
 
-export const GRADE_LABELS: Record<Grade, string> = {
-  [Rating.Again]: "Again",
-  [Rating.Hard]: "Hard",
-  [Rating.Good]: "Good",
-  [Rating.Easy]: "Easy",
-};
+/** Kart durumu: 1 = kısa aralıkta (bir günden az bekliyor), 2 = uzun aralıkta (gün ve üzeri). */
+export const State = { New: 0, Learning: 1, Review: 2 } as const;
 
-const scheduler = fsrs(
-  generatorParameters({
-    request_retention: SRS_CONFIG.requestRetention,
-    enable_fuzz: SRS_CONFIG.enableFuzz,
-    maximum_interval: SRS_CONFIG.maximumIntervalDays,
-    learning_steps: SRS_CONFIG.learningSteps,
-    relearning_steps: SRS_CONFIG.relearningSteps,
-  }),
-);
-
-/** Veritabanındaki `card_progress` satırının FSRS alanları (tarihler ISO metin). */
+/**
+ * Veritabanındaki `card_progress` satırının tekrar alanları (tarihler ISO metin).
+ * `learning_steps` kartın BASAMAĞINI tutar (0..MAX_LEVEL). `stability` ve `difficulty` eski
+ * sistemden (FSRS) kalmadır; okunmaz, olduğu gibi taşınır.
+ */
 export type ProgressFields = {
   due: string;
   stability: number;
@@ -53,63 +39,72 @@ export function isGrade(value: unknown): value is Grade {
   return value === 1 || value === 2 || value === 3 || value === 4;
 }
 
-/** Satır yoksa (kart bu kullanıcı için yeni) boş bir FSRS kartı üretir. */
-export function toFsrsCard(row: ProgressFields | null, now: Date): Card {
-  if (!row) return createEmptyCard(now);
+/** Kartın basamağı. Satır yoksa (kart bu kullanıcı için yeni) 0. */
+export function levelOf(row: ProgressFields | null): number {
+  if (!row) return 0;
+  const level = Math.trunc(Number(row.learning_steps));
+  return Number.isFinite(level) ? Math.min(Math.max(level, 0), MAX_LEVEL) : 0;
+}
+
+/**
+ * Kartı verilen puanla cevaplar ve satırın yeni halini döndürür.
+ *
+ * - Bilmedim (1): iki basamak iner, 90 sn sonra tekrar sorulur.
+ * - Zor (2): basamak değişmez, aynı süre bir kez daha beklenir.
+ * - Bildim (3): bir basamak çıkar. Çok kolay (4): iki basamak çıkar.
+ * - Zamanından önce (ek alıştırma olarak) bilinen kart basamak atlamaz, zamanı da değişmez.
+ */
+export function review(row: ProgressFields | null, grade: Grade, now: Date): ProgressFields {
+  const nowMs = now.getTime();
+  const level = levelOf(row);
+  const dueMs = row ? Date.parse(row.due) : nowMs;
+  const lastMs = row?.last_review ? Date.parse(row.last_review) : null;
+
+  const base = {
+    stability: row?.stability ?? 0,
+    difficulty: row?.difficulty ?? 0,
+    elapsed_days: lastMs === null ? 0 : Math.max(0, Math.floor((nowMs - lastMs) / DAY_MS)),
+    reps: (row?.reps ?? 0) + 1,
+    last_review: now.toISOString(),
+  };
+
+  const early = row !== null && nowMs < dueMs - EARLY_GRACE_MS;
+  if (row && early && grade !== Rating.Again) {
+    return {
+      ...base,
+      due: new Date(dueMs).toISOString(),
+      scheduled_days: row.scheduled_days,
+      learning_steps: level,
+      lapses: row.lapses,
+      state: row.state,
+    };
+  }
+
+  let nextLevel: number;
+  let waitMs: number;
+  if (grade === Rating.Again) {
+    nextLevel = Math.max(0, level - DROP_LEVELS);
+    waitMs = RETRY_MS;
+  } else if (grade === Rating.Hard) {
+    nextLevel = level;
+    waitMs = waitOf(level);
+  } else {
+    nextLevel = Math.min(MAX_LEVEL, level + (grade === Rating.Easy ? 2 : 1));
+    waitMs = waitOf(nextLevel);
+  }
+
   return {
-    due: new Date(row.due),
-    stability: row.stability,
-    difficulty: row.difficulty,
-    elapsed_days: row.elapsed_days,
-    scheduled_days: row.scheduled_days,
-    learning_steps: row.learning_steps,
-    reps: row.reps,
-    lapses: row.lapses,
-    state: row.state as State,
-    last_review: row.last_review ? new Date(row.last_review) : undefined,
+    ...base,
+    due: new Date(nowMs + waitMs).toISOString(),
+    scheduled_days: Math.floor(waitMs / DAY_MS),
+    learning_steps: nextLevel,
+    // Günlerce aralığa çıkmış bir kartın unutulması "unutma" sayılır.
+    lapses: (row?.lapses ?? 0) + (grade === Rating.Again && row?.state === State.Review ? 1 : 0),
+    state: waitMs >= DAY_MS ? State.Review : State.Learning,
   };
 }
 
-export function fromFsrsCard(card: Card): ProgressFields {
-  return {
-    due: card.due.toISOString(),
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsed_days: card.elapsed_days,
-    scheduled_days: card.scheduled_days,
-    learning_steps: card.learning_steps,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state,
-    last_review: card.last_review ? card.last_review.toISOString() : null,
-  };
-}
-
-/** Kartı verilen puanla cevaplar ve yeni halini döndürür. */
-export function review(card: Card, grade: Grade, now: Date): Card {
-  return scheduler.next(card, now, grade).card;
-}
-
-/** Dört butonun her biri için kartın bir sonraki vadesi. */
-export function previewDueDates(card: Card, now: Date): Record<Grade, Date> {
-  const preview = scheduler.repeat(card, now);
-  return {
-    [Rating.Again]: preview[Rating.Again].card.due,
-    [Rating.Hard]: preview[Rating.Hard].card.due,
-    [Rating.Good]: preview[Rating.Good].card.due,
-    [Rating.Easy]: preview[Rating.Easy].card.due,
-  };
-}
-
-/** İki an arasındaki süreyi kısa metne çevirir: "1m", "10m", "3h", "4d", "2mo", "1.5y". */
-export function formatInterval(from: Date, to: Date): string {
-  const minutes = Math.max(1, Math.round((to.getTime() - from.getTime()) / 60_000));
-  if (minutes < 60) return `${minutes}m`;
-  const hours = minutes / 60;
-  if (hours < 24) return `${Math.round(hours)}h`;
-  const days = hours / 24;
-  if (days < 30) return `${Math.round(days)}d`;
-  if (days < 365) return `${Math.round(days / 30)}mo`;
-  const years = Math.round((days / 365) * 10) / 10;
-  return `${years}y`;
+/** Bir basamaktaki kartın bekleme süresi; en alt basamakta (0) kısa tekrar süresi. */
+function waitOf(level: number): number {
+  return level <= 0 ? RETRY_MS : LADDER_MS[Math.min(level, MAX_LEVEL) - 1]!;
 }

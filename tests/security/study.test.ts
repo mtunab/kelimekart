@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { addDays, studyDay } from "@/lib/dates";
-import { fromFsrsCard, Rating, review, toFsrsCard, type Grade } from "@/lib/srs";
+import { Rating, review, type Grade } from "@/lib/srs";
 import {
   assertNotProd,
   createTestUser,
@@ -21,7 +21,7 @@ async function answer(
     user.client.from("card_progress").select("*").eq("card_id", cardId).maybeSingle(),
   );
   const now = new Date();
-  const next = fromFsrsCard(review(toFsrsCard(row, now), grade, now));
+  const next = review(row, grade, now);
   if (overrideDue) next.due = overrideDue.toISOString();
   const eventId = crypto.randomUUID();
   const { data, error } = await withRetry(() =>
@@ -181,7 +181,7 @@ describe.skipIf(!hasDevEnv)("içe aktarma, arama, kuyruk ve günlük sayılar", 
       const one = await cardIdByFront("one");
       const two = await cardIdByFront("two");
       await answer(ayse, one, Rating.Easy, new Date(Date.now() - 60_000)); // hemen vadesi gelsin
-      await answer(ayse, two, Rating.Easy); // günler sonra
+      await answer(ayse, two, Rating.Easy); // 30 dk sonra: henüz hazır değil
 
       const { data } = await ayse.client.rpc("get_study_queue", { p_deck_id: deckId });
       const rowsQ = data as QueueRow[];

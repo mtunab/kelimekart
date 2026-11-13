@@ -115,7 +115,8 @@ test.describe("ana akış (masaüstü)", () => {
     expect(csv).toContain('"lamp, desk",masa lambası');
     expect(csv.split("\r\n").filter(Boolean)).toHaveLength(14);
 
-    // Çalışma: günlük yeni limit 10 → 10 kart. Klavyeyle: Boşluk = çevir, 4 = Kolay.
+    // Çalışma: günlük yeni limit 10 → 10 kart. Klavyeyle: Boşluk = çevir, 4 = Çok kolay
+    // (iki basamak çıkar: 30 dk sonra döner, oturumdan çıkar).
     await page
       .getByRole("navigation", { name: "Deck actions" })
       .getByRole("link", { name: "Study" })
@@ -219,15 +220,15 @@ test.describe("kısa akış (mobil 390px)", () => {
       const box = (await card.boundingBox())!;
       const y = box.y + box.height / 2;
       const x = box.x + box.width / 2;
-      const dx = i === 0 ? -150 : 150; // ilk kart sola (Tekrar), diğerleri sağa (İyi)
+      const dx = i === 0 ? -150 : 150; // ilk kart sola (bilmedim), diğerleri sağa (bildim)
       await page.mouse.move(x, y);
       await page.mouse.down();
       await page.mouse.move(x + dx / 2, y, { steps: 5 });
       await page.mouse.move(x + dx, y, { steps: 5 });
       await page.mouse.up();
-      // "Tekrar" (sola) 2 dk sonra döner, oturumda bekler; "İyi" (sağa) 30 dk sonra döner,
-      // oturumdan çıkar. Her kaydırmada "yeni" bir azalır, bekleyen yalnızca sola kaydırılan kart.
-      await expect(page.getByText("1 due", { exact: true })).toBeVisible();
+      // DuoCards kuralı: bilinmeyen kart da ilk kez bilinen kart da 90 sn sonra tekrar sorulur;
+      // ikisi de oturumda bekler. Her kaydırmada "yeni" bir azalır, bekleyen bir artar.
+      await expect(page.getByText(`${i + 1} due`, { exact: true })).toBeVisible();
       await expect(page.getByText(`${2 - i} new`, { exact: true })).toBeVisible();
     }
 
@@ -317,7 +318,7 @@ test.describe("geri sayım ve ana sayfa tutarlılığı (masaüstü)", () => {
     await expect(card).toBeVisible();
     await page.keyboard.press("Space");
     await expect(card).toHaveAttribute("data-flipped", "true");
-    await page.keyboard.press("1"); // Again: ~1 dk sonra döner
+    await page.keyboard.press("1"); // Bilmedim: 90 sn sonra döner
 
     // Kart hemen tekrar gelmez; geri sayım görünür.
     await expect(page.getByText("Your next card is coming up in a moment.")).toBeVisible();
@@ -342,5 +343,82 @@ test.describe("geri sayım ve ana sayfa tutarlılığı (masaüstü)", () => {
     // Ana sayfa bu kartı "hazır" sayar: Start düğmesi kaybolmaz.
     await page.goto("/");
     await expect(page.getByRole("link", { name: /Start studying/ })).toBeVisible();
+  });
+});
+
+test.describe("bilinmeyen kart liste bitmeden geri gelir (masaüstü)", () => {
+  test.skip(({ isMobile }) => isMobile, "Masaüstünde yeterli.");
+  let user: AuthUser;
+
+  test.beforeAll(async () => {
+    user = await createAuthUser("e2e", "Ece");
+  });
+  test.afterAll(async () => {
+    await deleteTestUsers([user]);
+  });
+
+  test("bilinmeyen kart 90 sn sonra, sıradaki yeni kartların önüne geçerek tekrar sorulur", async ({
+    page,
+  }) => {
+    test.setTimeout(240_000);
+    await login(page, user.username, user.password);
+    await expect(page.getByRole("heading", { name: /^Hi, Ece/ })).toBeVisible();
+    await createDeck(page, "Return Deck");
+    for (const [front, back] of WORDS.slice(0, 8)) await quickAdd(page, front, back);
+
+    await page
+      .getByRole("navigation", { name: "Deck actions" })
+      .getByRole("link", { name: "Study" })
+      .click();
+    const card = page.getByTestId("study-card");
+    const front = () => card.locator("p").first().innerText();
+    const answer = async (key: "1" | "3" | "4") => {
+      await expect(card).toBeVisible();
+      await page.keyboard.press("Space");
+      await expect(card).toHaveAttribute("data-flipped", "true");
+      await page.keyboard.press(key);
+    };
+
+    await expect(page.getByText("8 new", { exact: true })).toBeVisible();
+    const failed = await front();
+    await answer("1"); // bilmedim
+    await expect(page.getByText("7 new", { exact: true })).toBeVisible();
+    await expect(page.getByText("1 due", { exact: true })).toBeVisible();
+
+    // Hemen geri gelmez: araya başka kartlar girer.
+    for (let i = 0; i < 3; i++) {
+      expect(await front()).not.toBe(failed);
+      await answer("4");
+    }
+    await expect(page.getByText("4 new", { exact: true })).toBeVisible();
+    expect(await front()).not.toBe(failed);
+
+    // 90 sn dolunca, sırada 3 yeni kart daha beklerken bilinmeyen kart öne geçer.
+    await page.waitForTimeout(92_000);
+    await answer("4");
+    await expect(page.getByText("3 new", { exact: true })).toBeVisible();
+    await expect(card.locator("p").first()).toHaveText(failed);
+    await expect(card.getByText("new", { exact: true })).toHaveCount(0);
+
+    // Bu kez bilindi (3): bir basamak çıkar ve yine 90 sn sonra sorulmak üzere oturumda kalır.
+    await answer("3");
+    await expect(page.getByText("1 due", { exact: true })).toBeVisible();
+    expect(await front()).not.toBe(failed);
+
+    // Veritabanında: kart 1. basamakta ve yaklaşık 90 sn sonraya planlı.
+    await expect
+      .poll(
+        async () => {
+          const { data } = await serviceClient()
+            .from("card_progress")
+            .select("learning_steps, cards!inner(front)")
+            .eq("user_id", user.id)
+            .eq("cards.front", failed)
+            .maybeSingle();
+          return data?.learning_steps ?? -1;
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(1);
   });
 });

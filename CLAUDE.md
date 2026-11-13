@@ -44,7 +44,7 @@ Herkese açık kayıt, ödeme, mobil uygulama (App Store/Play), otomatik çeviri
 | Framework | Next.js (güncel kararlı sürüm, App Router, TypeScript **strict**) |
 | Stil | Tailwind CSS, mobil öncelikli |
 | Veritabanı + Auth | Supabase (Postgres, Auth, RLS) — `@supabase/ssr` ile |
-| Tekrar algoritması | `ts-fsrs` (FSRS). Kendi algoritmanı yazma. |
+| Tekrar algoritması | DuoCards'ın basamaklı sistemi, `src/lib/srs/` içinde (2026-11-13, Tuna'nın isteği; ilk sürüm `ts-fsrs` idi). Süreler tek yerde: `src/lib/srs/config.ts`. |
 | Doğrulama | Zod (tüm sunucu girdileri) |
 | Birim/entegrasyon testi | Vitest |
 | Uçtan uca test | Playwright |
@@ -111,7 +111,8 @@ cards
 
 card_progress                          -- KİŞİYE ÖZEL
   user_id, card_id, PRIMARY KEY (user_id, card_id)
-  due, stability, difficulty, state, reps, lapses, last_review, ...(ts-fsrs Card alanları)
+  due, learning_steps (= kartın BASAMAĞI, 0..6), state (1 kısa aralık, 2 gün ve üzeri),
+  reps, lapses, last_review, scheduled_days, ... (stability/difficulty eski FSRS'ten kalma, okunmaz)
   INDEX (user_id, due)                 -- bugünün kuyruğu için kritik
 
 review_logs                            -- KİŞİYE ÖZEL, sadece ekleme
@@ -157,10 +158,11 @@ review_logs                            -- KİŞİYE ÖZEL, sadece ekleme
 - **Cevap işleme sunucuda yapılır** (server action veya RPC): istemciden sadece `cardId`, `rating`, `clientEventId` gelir. Sunucu mevcut durumu okur, `ts-fsrs` ile yeni durumu hesaplar, `card_progress` güncellemesi + `review_logs` eklemesini **tek transaction**da yapar. Aynı `clientEventId` ikinci kez gelirse hiçbir şey değişmez (idempotent).
 - Çevrimdışı/yavaş bağlantıda arayüz bloke olmasın: cevap iyimser (optimistic) gösterilsin, hata olursa kart geri gelsin ve kullanıcıya bilgi verilsin.
 
-### 6.4 SRS sarmalayıcı (`src/lib/srs/`)
-- Saf fonksiyonlar: `(card, rating, now) → yeni card`. Yan etki yok, `Date` dışarıdan verilir (test edilebilirlik).
-- FSRS ayarları tek dosyada: hedef hatırlama oranı (varsayılan 0.9), `enable_fuzz: true`.
-- Dönüşüm yardımcıları: veritabanı satırı ↔ `ts-fsrs` `Card`. Tarih alanları UTC saklanır.
+### 6.4 Tekrar hesabı (`src/lib/srs/`)
+- Saf fonksiyon: `review(satır | null, puan, now) → yeni satır`. Yan etki yok, `Date` dışarıdan verilir (test edilebilirlik). Girdi/çıktı doğrudan `card_progress` alanları; tarihler UTC saklanır.
+- DuoCards'ın basamaklı sistemi (kaynak: DuoCards yardım sayfası). Bilinen kart bir basamak çıkar ve o basamağın süresi kadar bekler: **90 sn → 30 dk → 12 sa → 2 gün → 2 hafta → 2 ay** (tepede 2 ayda bir). Bilinmeyen kart **iki basamak iner ve 90 sn sonra** tekrar sorulur. Klavyede Zor = basamak aynı, Çok kolay = iki basamak.
+- Zamanından önce (ek alıştırma olarak) bilinen kart basamak atlamaz, zamanı değişmez.
+- Süreler ve kurallar tek dosyada: `src/lib/srs/config.ts`.
 
 ### 6.5 "Gün" kavramı ve streak
 - Bir "gün" kullanıcının `timezone` değerine göre hesaplanır (UTC'ye göre değil). Gün sınırı: yerel saat **04:00** (gece geç çalışanlar için).
@@ -341,4 +343,8 @@ Verdiğin her önemli teknik kararı (ör. undo yöntemi, FSRS ayarları, ek pak
 | 2026-10-26 | Çalışma akışı (Tuna'nın 3 şikayeti): (1) "hazır kart" kuralı tek yerde `is_study_ready()`; ana sayfa (`deck_summaries`) ve kuyruk aynı sayıyı verir, Start düğmesi kaybolmaz. (2) Oturumdaki kart dönüş zamanını gerçekten bekler ve araya en az 3 kart girmeden tekrar çıkmaz (`lib/study-queue.ts`, saf + birim testli); sadece bekleyen kart kalınca geri sayım ekranı. (3) Günlük hedefe ulaşılmadan liste biterse düğmesiz, kendiliğinden ek kart: önce sınırın ötesinde yeni kelime, sonra erken tekrar (`get_extra_cards`, oturumda görülenler hariç). `sessionSummary` artık sayfayı yenilemez | Anki'nin 20 dk "learn ahead" davranışı iki kart arasında anında gidip gelmeye yol açıyordu; DuoCards'ta en kısa aralık 90 sn. Sayfa yenilenmesi hedefi iki kez sayıyordu (e2e yakaladı). |
 | 2026-10-26 | FSRS'te kalınıp ilk adımlar DuoCards'a benzetildi (Tuna onayladı): öğrenme adımları `2m, 30m, 12h`, yeniden öğrenme `2m, 30m` (`src/lib/srs/config.ts`); sonrası FSRS. DuoCards'ın 90 sn'si yerine 2 dk: ts-fsrs yalnızca tam dakika kabul ediyor (`1.5m` → 1 dk'ya yuvarlanıyor). 'Doğru' denen yeni kelime 30 dk sonra döndüğü için oturumdan çıkar (20 dk penceresi dışında) | DuoCards'ın ilk gün sık pekiştirmesi + FSRS'in kişiye göre uzun vadeli aralıkları. Eski varsayılan 1m/10m idi. |
 | 2026-10-26 | Çalışma ekranında hiçbir süre gösterilmez (Tuna'nın isteği): kaydırma ipucu ve GOOD/AGAIN damgalarında aralık yok, bekleme ekranında geri sayım yok ("birazdan" + animasyon; kart zamanı gelince kendiliğinden gelir). Kılavuzdan da süreler çıkarıldı | Kullanıcı aralıklara kafa yormasın; aralıklar gerekirse ileride deste sayfasında gösterilebilir. |
+| 2026-11-13 | **Tekrar sistemi FSRS'ten DuoCards'ın basamaklı sistemine geçti** (Tuna: "oradaki algoritmayı kullanalım"). Kurallar 6.4'te; hesap `src/lib/srs/` (saf, birim testli), `ts-fsrs` paketi kaldırıldı. Şema değişmedi: `card_progress.learning_steps` artık basamağı tutar, `apply_review`/`undo_review` aynı. Migration `20261113090000_duocards_ladder` var olan kartların basamağını bekledikleri aralıktan türetir (vadeler değişmez). `review_logs` aynen duruyor | Tuna'nın şikâyeti: bilmediği kart çok sonra geliyordu. Basamak sistemi öngörülebilir: bilinmeyen kart HER ZAMAN 90 sn sonra gelir. Kayıtlar durduğu için istenirse FSRS'e dönülebilir. Bu karar 3. bölümdeki "ts-fsrs, kendi algoritmanı yazma" maddesinin ve 2026-10-19/26 FSRS kararlarının yerini alır. |
+| 2026-11-13 | Oturum sırası: zamanı gelen kısa aralıklı ("acil") kart sıradaki yeni/tekrar kartlarının önüne geçer (`pickNext`, `urgent`); oturumda kalma penceresi 20 dk → **2 dk** (`LEARN_AHEAD_MS` ve `is_study_ready()` aynı). İlk kez bilinen yeni kart da 90 sn sonra bir kez daha sorulur (DuoCards'taki gibi) | Asıl hata buydu: bilinmeyen kart listenin SONUNA ekleniyordu, 40 kartlık listede ancak hepsi bittikten sonra geliyordu. 20 dk penceresi 30 dk'lık kartı "hazır" gösterip bekleme ekranında tutuyordu. |
+| 2026-11-13 | Kaydırma cevabı saf fonksiyonda (`swipeGrade`): yön kartın durduğu tarafa göre; ters yöne hızla çekilirse cevap sayılmaz | Eskiden önce hıza bakılıyordu: sola çekilip bırakılırken parmak sağa kayarsa "bilmedim" yerine "bildim" kaydediliyordu (kart günler sonraya gidiyordu). |
+| 2026-11-13 | İstatistikte "olgun" = 2 hafta ve üzeri aralık (5-6. basamak); eskiden 21 gün | Yeni sistemde 21 günlük aralık yok. |
 | 2026-10-19 | Güvenlik testleri Vitest içinde `tests/security/` altında, dosyalar sırayla çalışır | Aynı dev veritabanını paylaştıkları için birbirini bozmasınlar. |

@@ -1,13 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { studyDay } from "@/lib/dates";
-import {
-  fromFsrsCard,
-  Rating,
-  review,
-  toFsrsCard,
-  type Grade,
-  type ProgressFields,
-} from "@/lib/srs";
+import { Rating, review, type Grade, type ProgressFields } from "@/lib/srs";
 import {
   assertNotProd,
   createTestUser,
@@ -28,7 +21,7 @@ async function answer(
     user.client.from("card_progress").select("*").eq("card_id", cardId).maybeSingle(),
   );
   const now = new Date();
-  const next = { ...fromFsrsCard(review(toFsrsCard(row, now), grade, now)), ...override };
+  const next = { ...review(row, grade, now), ...override };
   const eventId = crypto.randomUUID();
   const { data, error } = await withRetry(() =>
     user.client.rpc("apply_review", {
@@ -63,14 +56,15 @@ describe.skipIf(!hasDevEnv)("istatistikler elle hesaplanan değerlerle eşleşir
     const id = (front: string) => cards.data!.find((c) => c.front === front)!.id as string;
 
     // Elle kurulan senaryo:
-    // c1 İyi (öğreniliyor), c2 Tekrar (öğreniliyor), c3 Kolay + aralık 30 gün (olgun),
+    // c1 Bildim (öğreniliyor), c2 Bilmedim (öğreniliyor), c3 2 hafta aralıkta (5. basamak, olgun),
     // c4 Zor ama GERİ ALINDI → hiçbir sayıma girmez, kart yeni kalır.
     await answer(ayse, id("c1"), Rating.Good);
     await answer(ayse, id("c2"), Rating.Again);
     await answer(ayse, id("c3"), Rating.Easy, {
       state: 2,
-      scheduled_days: 30,
-      due: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      learning_steps: 5,
+      scheduled_days: 14,
+      due: new Date(Date.now() + 14 * 86_400_000).toISOString(),
     });
     const undone = await answer(ayse, id("c4"), Rating.Hard);
     const undo = await ayse.client.rpc("undo_review", { p_log_id: undone });
@@ -149,12 +143,12 @@ describe.skipIf(!hasDevEnv)("istatistikler elle hesaplanan değerlerle eşleşir
     );
   });
 
-  it("vade tahmini: olgun kart ~30 gün sonra görünür", async () => {
+  it("vade tahmini: olgun kart ~14 gün sonra görünür", async () => {
     const { data } = await ayse.client.rpc("due_forecast", { p_days: 40 });
     const rows = data as { day: string; due_count: number }[];
     const total = rows.reduce((sum, r) => sum + Number(r.due_count), 0);
-    expect(total).toBe(3); // c1, c2 (dakikalar içinde → bugün), c3 (30 gün sonra)
+    expect(total).toBe(3); // c1, c2 (90 sn içinde → bugün), c3 (14 gün sonra)
     expect(Number(rows[0]!.due_count)).toBe(2);
-    expect(rows.slice(28, 33).reduce((sum, r) => sum + Number(r.due_count), 0)).toBe(1);
+    expect(rows.slice(12, 17).reduce((sum, r) => sum + Number(r.due_count), 0)).toBe(1);
   });
 });

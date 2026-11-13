@@ -33,7 +33,7 @@ in your head, then flip the card and tell the app how well you remembered:
 | **Good**  | I remembered                  | Swipe right · key 3 |
 | **Easy**  | I knew it instantly           | Key 4               |
 
-- Be honest; the app decides when each word comes back. Words you know come back less and less often, words you miss come back sooner.
+- Be honest; the app decides when each word comes back. Every time you know a word it waits longer before coming back; a word you miss comes back a moment later in the same session, and then more often for a while.
 - **Flip:** tap the card or press **Space**. Then drag the card **right = Good**, **left = Again** (a mouse works too).
   On a keyboard, **1–4** gives all four answers.
 - **Listen** reads the word aloud. **Undo** (**Z** on a keyboard) takes back your last answer.

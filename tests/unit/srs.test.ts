@@ -1,149 +1,229 @@
 import { describe, expect, it } from "vitest";
 import {
-  formatInterval,
-  fromFsrsCard,
   GRADES,
   isGrade,
-  previewDueDates,
+  LADDER_MS,
+  levelOf,
+  MAX_LEVEL,
   Rating,
+  RETRY_MS,
   review,
   State,
-  toFsrsCard,
-  type Card,
+  type ProgressFields,
 } from "@/lib/srs";
 
 const T0 = new Date("2026-03-01T09:00:00.000Z");
-const minutes = (a: Date, b: Date) => (b.getTime() - a.getTime()) / 60_000;
-const days = (a: Date, b: Date) => minutes(a, b) / 1440;
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 
-function newCard() {
-  return toFsrsCard(null, T0);
-}
+/** Cevaptan sonra kartın kaç ms bekleyeceği. */
+const wait = (row: ProgressFields, answeredAt: Date) => Date.parse(row.due) - answeredAt.getTime();
 
-/** Kartı "İyi" ile tekrar durumuna getirir (öğrenme adımlarını geçerek). */
-function graduate(): { card: Card; at: Date } {
-  let card = newCard();
-  let at = T0;
-  for (let i = 0; i < 5 && card.state !== State.Review; i++) {
-    card = review(card, Rating.Good, at);
-    at = card.due;
+/** Kartı her seferinde tam zamanında "bildim" diyerek istenen basamağa çıkarır. */
+function climb(level: number): { row: ProgressFields; at: Date } {
+  let row = review(null, Rating.Good, T0);
+  let at = new Date(row.due);
+  while (levelOf(row) < level) {
+    row = review(row, Rating.Good, at);
+    at = new Date(row.due);
   }
-  return { card, at };
+  return { row, at };
 }
 
-describe("SRS: yeni kart", () => {
-  it("satır yoksa boş, yeni bir kart üretir", () => {
-    const card = newCard();
-    expect(card.state).toBe(State.New);
-    expect(card.reps).toBe(0);
-    expect(card.due.getTime()).toBe(T0.getTime());
+describe("DuoCards merdiveni: süreler", () => {
+  it("süreler DuoCards'ın yayımladığı sırayla aynı", () => {
+    expect([...LADDER_MS]).toEqual([
+      90 * SECOND,
+      30 * MINUTE,
+      12 * HOUR,
+      2 * DAY,
+      14 * DAY,
+      60 * DAY,
+    ]);
+    expect(MAX_LEVEL).toBe(6);
+    expect(RETRY_MS).toBe(90 * SECOND);
   });
 
-  it.each(GRADES)("puan %i sonrası reps 1 olur, vade ileri gider", (grade) => {
-    const next = review(newCard(), grade, T0);
-    expect(next.reps).toBe(1);
-    expect(next.last_review?.getTime()).toBe(T0.getTime());
-    expect(next.due.getTime()).toBeGreaterThan(T0.getTime());
+  it("hep bilinen yeni kart: 90 sn → 30 dk → 12 sa → 2 gün → 2 hafta → 2 ay", () => {
+    let row: ProgressFields | null = null;
+    let at = T0;
+    const waits: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      row = review(row, Rating.Good, at);
+      waits.push(wait(row, at));
+      expect(levelOf(row)).toBe(i + 1);
+      at = new Date(row.due);
+    }
+    expect(waits).toEqual([...LADDER_MS]);
   });
 
-  it("Tekrar < Zor < İyi < Kolay sırasıyla daha uzak vade verir", () => {
-    const dues = GRADES.map((grade) => review(newCard(), grade, T0).due.getTime());
-    expect(dues[0]!).toBeLessThan(dues[1]!);
-    expect(dues[1]!).toBeLessThan(dues[2]!);
-    expect(dues[2]!).toBeLessThan(dues[3]!);
-  });
-
-  it("Tekrar ve İyi öğrenme durumuna, Kolay doğrudan tekrar durumuna geçer", () => {
-    expect(review(newCard(), Rating.Again, T0).state).toBe(State.Learning);
-    expect(review(newCard(), Rating.Good, T0).state).toBe(State.Learning);
-    expect(review(newCard(), Rating.Easy, T0).state).toBe(State.Review);
-  });
-
-  it("Tekrar dakikalar içinde geri gelir", () => {
-    const next = review(newCard(), Rating.Again, T0);
-    expect(minutes(T0, next.due)).toBeLessThanOrEqual(10);
+  it("en üst basamaktaki kart bilindikçe 2 ayda bir gelir", () => {
+    const { row, at } = climb(MAX_LEVEL);
+    const next = review(row, Rating.Good, at);
+    expect(levelOf(next)).toBe(MAX_LEVEL);
+    expect(wait(next, at)).toBe(60 * DAY);
   });
 });
 
-describe("SRS: öğrenme ve tekrar", () => {
-  it("İyi ile birkaç adımda tekrar durumuna geçer ve günlerce sonraya planlanır", () => {
-    const { card } = graduate();
-    expect(card.state).toBe(State.Review);
-    expect(days(card.last_review!, card.due)).toBeGreaterThanOrEqual(1);
+describe("DuoCards merdiveni: bilinmeyen kart", () => {
+  it("yeni kart bilinmezse 90 sn sonra tekrar sorulur ve en alt basamakta kalır", () => {
+    const row = review(null, Rating.Again, T0);
+    expect(wait(row, T0)).toBe(90 * SECOND);
+    expect(levelOf(row)).toBe(0);
+    expect(row.state).toBe(State.Learning);
   });
 
-  it("tekrar durumundaki kartta İyi aralığı büyütür", () => {
-    const { card } = graduate();
-    const firstInterval = days(card.last_review!, card.due);
-    const next = review(card, Rating.Good, card.due);
-    expect(days(card.due, next.due)).toBeGreaterThan(firstInterval);
+  it.each([1, 2, 3, 4, 5, 6])(
+    "%i. basamaktaki kart bilinmezse HER ZAMAN 90 sn sonra gelir ve iki basamak iner",
+    (level) => {
+      const { row, at } = climb(level);
+      const next = review(row, Rating.Again, at);
+      expect(wait(next, at)).toBe(90 * SECOND);
+      expect(levelOf(next)).toBe(Math.max(0, level - 2));
+      expect(next.state).toBe(State.Learning);
+    },
+  );
+
+  it("bilinmeyen kart günler sonraya asla planlanmaz (geç kalınmış olsa da)", () => {
+    const { row, at } = climb(6);
+    const late = new Date(at.getTime() + 40 * DAY);
+    expect(wait(review(row, Rating.Again, late), late)).toBe(90 * SECOND);
   });
 
-  it("tekrar durumundaki kartta Tekrar unutma sayar ve yeniden öğrenmeye alır", () => {
-    const { card } = graduate();
-    const next = review(card, Rating.Again, card.due);
-    expect(next.lapses).toBe(card.lapses + 1);
-    expect(next.state).toBe(State.Relearning);
-    expect(minutes(card.due, next.due)).toBeLessThan(60);
+  it("bilinmeyip sonra bilinen kart indiği basamaktan devam eder", () => {
+    // 4. basamak (2 gün) → bilinmedi → 2. basamak; bilindi → 3. basamak (12 sa); → 4 (2 gün).
+    const { row, at } = climb(4);
+    const failed = review(row, Rating.Again, at);
+    const back = new Date(failed.due);
+    const known = review(failed, Rating.Good, back);
+    expect(levelOf(known)).toBe(3);
+    expect(wait(known, back)).toBe(12 * HOUR);
+    const again = review(known, Rating.Good, new Date(known.due));
+    expect(wait(again, new Date(known.due))).toBe(2 * DAY);
   });
 
-  it("geç kalınan tekrar da işlenir (vadeden 10 gün sonra)", () => {
-    const { card } = graduate();
-    const late = new Date(card.due.getTime() + 10 * 86_400_000);
-    const next = review(card, Rating.Good, late);
-    expect(next.due.getTime()).toBeGreaterThan(late.getTime());
+  it("günlerce aralıktaki kartın unutulması 'unutma' sayılır; kısa aralıktaki sayılmaz", () => {
+    const long = climb(4);
+    expect(review(long.row, Rating.Again, long.at).lapses).toBe(1);
+    const short = climb(2);
+    expect(review(short.row, Rating.Again, short.at).lapses).toBe(0);
+  });
+});
+
+describe("DuoCards merdiveni: zor ve çok kolay (klavye)", () => {
+  it("zor: basamak değişmez, aynı süre bir kez daha beklenir", () => {
+    const { row, at } = climb(3);
+    const next = review(row, Rating.Hard, at);
+    expect(levelOf(next)).toBe(3);
+    expect(wait(next, at)).toBe(12 * HOUR);
+    expect(wait(review(null, Rating.Hard, T0), T0)).toBe(90 * SECOND);
+  });
+
+  it("çok kolay: iki basamak çıkar, tepeyi aşmaz", () => {
+    const row = review(null, Rating.Easy, T0);
+    expect(levelOf(row)).toBe(2);
+    expect(wait(row, T0)).toBe(30 * MINUTE);
+    const top = climb(5);
+    expect(levelOf(review(top.row, Rating.Easy, top.at))).toBe(MAX_LEVEL);
+  });
+
+  it("yeni kartta bilmedim ≤ zor < bildim < çok kolay sırasıyla daha uzak zaman verir", () => {
+    const dues = GRADES.map((grade) => Date.parse(review(null, grade, T0).due));
+    expect(dues[0]!).toBeLessThanOrEqual(dues[1]!);
+    expect(dues[1]!).toBeLessThanOrEqual(dues[2]!);
+    expect(dues[2]!).toBeLessThan(dues[3]!);
+  });
+});
+
+describe("DuoCards merdiveni: erken tekrar (ek alıştırma)", () => {
+  it("zamanından günler önce bilinen kart basamak atlamaz, zamanı değişmez", () => {
+    const { row, at } = climb(4); // 2 gün bekliyor
+    const early = new Date(at.getTime() - DAY);
+    const next = review(row, Rating.Good, early);
+    expect(levelOf(next)).toBe(4);
+    expect(next.due).toBe(row.due);
+    expect(next.state).toBe(row.state);
+    expect(next.scheduled_days).toBe(row.scheduled_days);
+    expect(next.reps).toBe(row.reps + 1);
+  });
+
+  it("erken tekrarda bilinmeyen kart yine iner ve 90 sn sonra gelir", () => {
+    const { row, at } = climb(4);
+    const early = new Date(at.getTime() - DAY);
+    const next = review(row, Rating.Again, early);
+    expect(levelOf(next)).toBe(2);
+    expect(wait(next, early)).toBe(90 * SECOND);
+  });
+
+  it("birkaç dakikalık saat farkı erken sayılmaz", () => {
+    const { row, at } = climb(2); // 30 dk bekliyor
+    const slightlyEarly = new Date(at.getTime() - 2 * MINUTE);
+    expect(levelOf(review(row, Rating.Good, slightlyEarly))).toBe(3);
+  });
+
+  it("geç kalınan kart da normal işlenir", () => {
+    const { row, at } = climb(4);
+    const late = new Date(at.getTime() + 10 * DAY);
+    const next = review(row, Rating.Good, late);
+    expect(levelOf(next)).toBe(5);
+    expect(wait(next, late)).toBe(14 * DAY);
+  });
+});
+
+describe("satır alanları", () => {
+  it.each(GRADES)("puan %i sonrası tekrar sayısı 1 artar, son tekrar zamanı yazılır", (grade) => {
+    const row = review(null, grade, T0);
+    expect(row.reps).toBe(1);
+    expect(row.last_review).toBe(T0.toISOString());
+    expect(Date.parse(row.due)).toBeGreaterThan(T0.getTime());
+  });
+
+  it("durum: bir günden kısa bekleyen 1, gün ve üzeri bekleyen 2; gün sayısı doğru", () => {
+    expect(climb(3).row).toMatchObject({ state: State.Learning, scheduled_days: 0 });
+    expect(climb(4).row).toMatchObject({ state: State.Review, scheduled_days: 2 });
+    expect(climb(5).row).toMatchObject({ state: State.Review, scheduled_days: 14 });
+    expect(climb(6).row).toMatchObject({ state: State.Review, scheduled_days: 60 });
+  });
+
+  it("tarihler UTC ISO metni; veritabanından gelen +00:00 biçimi de okunur", () => {
+    const row = review(null, Rating.Good, T0);
+    expect(row.due).toMatch(/Z$/);
+    const fromDb = { ...row, due: row.due.replace("Z", "+00:00") };
+    const next = review(fromDb, Rating.Good, new Date(row.due));
+    expect(wait(next, new Date(row.due))).toBe(30 * MINUTE);
+  });
+
+  it("satırdaki fazladan alanlar (sürüm, kullanıcı) çıktıya taşınmaz", () => {
+    const row = { ...review(null, Rating.Good, T0), version: 7, user_id: "x" };
+    const next = review(row, Rating.Good, new Date(row.due));
+    expect(Object.keys(next).sort()).toEqual(
+      [
+        "difficulty",
+        "due",
+        "elapsed_days",
+        "lapses",
+        "last_review",
+        "learning_steps",
+        "reps",
+        "scheduled_days",
+        "stability",
+        "state",
+      ].sort(),
+    );
   });
 
   it("aynı girdiyle aynı sonucu verir (saf fonksiyon)", () => {
-    const { card } = graduate();
-    const a = review(card, Rating.Good, card.due);
-    const b = review(card, Rating.Good, card.due);
-    expect(fromFsrsCard(a)).toEqual(fromFsrsCard(b));
-  });
-});
-
-describe("SRS: önizleme", () => {
-  it("dört buton için vadeler artan sırada", () => {
-    const preview = previewDueDates(newCard(), T0);
-    expect(preview[Rating.Again].getTime()).toBeLessThan(preview[Rating.Hard].getTime());
-    expect(preview[Rating.Good].getTime()).toBeLessThan(preview[Rating.Easy].getTime());
+    const { row, at } = climb(3);
+    expect(review(row, Rating.Good, at)).toEqual(review(row, Rating.Good, at));
   });
 
-  it("önizleme ile gerçek cevap aynı vadeyi verir", () => {
-    const { card } = graduate();
-    const preview = previewDueDates(card, card.due);
-    expect(review(card, Rating.Good, card.due).due.getTime()).toBe(preview[Rating.Good].getTime());
-  });
-});
-
-describe("SRS: veritabanı dönüşümü", () => {
-  it("satır → kart → satır kayıpsız", () => {
-    const { card } = graduate();
-    const row = fromFsrsCard(card);
-    expect(fromFsrsCard(toFsrsCard(row, T0))).toEqual(row);
-  });
-
-  it("tarihler UTC ISO metni olarak saklanır", () => {
-    const row = fromFsrsCard(review(newCard(), Rating.Good, T0));
-    expect(row.due).toMatch(/Z$/);
-    expect(row.last_review).toBe(T0.toISOString());
-  });
-
-  it("yeni kartta last_review null", () => {
-    expect(fromFsrsCard(newCard()).last_review).toBeNull();
-  });
-});
-
-describe("yardımcılar", () => {
-  it.each([
-    [0, "1m"],
-    [10, "10m"],
-    [90, "2h"],
-    [60 * 24 * 3, "3d"],
-    [60 * 24 * 65, "2mo"],
-    [60 * 24 * 365 * 1.5, "1.5y"],
-  ])("%i dakika → %s", (mins, text) => {
-    expect(formatInterval(T0, new Date(T0.getTime() + mins * 60_000))).toBe(text);
+  it("bozuk basamak değeri güvenli aralığa çekilir", () => {
+    const row = review(null, Rating.Good, T0);
+    expect(levelOf({ ...row, learning_steps: 99 })).toBe(MAX_LEVEL);
+    expect(levelOf({ ...row, learning_steps: -3 })).toBe(0);
+    expect(levelOf(null)).toBe(0);
   });
 
   it("geçerli puanları tanır", () => {
@@ -156,42 +236,5 @@ describe("yardımcılar", () => {
       false,
       false,
     ]);
-  });
-});
-
-describe("DuoCards benzeri ilk adımlar (2 dk → 30 dk → 12 sa → FSRS)", () => {
-  it("yeni kelime: yanlış 2 dk, doğru 30 dk, sonra 12 sa, sonra en az 1 gün", () => {
-    expect(minutes(T0, review(newCard(), Rating.Again, T0).due)).toBe(2);
-
-    const first = review(newCard(), Rating.Good, T0);
-    expect(minutes(T0, first.due)).toBe(30);
-    expect(first.state).toBe(State.Learning);
-
-    const second = review(first, Rating.Good, first.due);
-    expect(minutes(first.due, second.due)).toBe(12 * 60);
-
-    const third = review(second, Rating.Good, second.due);
-    expect(third.state).toBe(State.Review);
-    expect(days(second.due, third.due)).toBeGreaterThanOrEqual(1);
-  });
-
-  it("öğrenmedeyken yanlış bilinen kelime 2 dk'ya döner", () => {
-    const first = review(newCard(), Rating.Good, T0);
-    const again = review(first, Rating.Again, first.due);
-    expect(minutes(first.due, again.due)).toBe(2);
-  });
-
-  it("unutulan eski kelime: yanlış 2 dk, sonra doğru 30 dk, sonra yeniden günler", () => {
-    const { card, at } = graduate();
-    const forgot = review(card, Rating.Again, card.due > at ? card.due : at);
-    expect(forgot.state).toBe(State.Relearning);
-    const forgotAt = card.due > at ? card.due : at;
-    expect(minutes(forgotAt, forgot.due)).toBe(2);
-
-    const relearn = review(forgot, Rating.Good, forgot.due);
-    expect(minutes(forgot.due, relearn.due)).toBe(30);
-    const back = review(relearn, Rating.Good, relearn.due);
-    expect(back.state).toBe(State.Review);
-    expect(days(relearn.due, back.due)).toBeGreaterThanOrEqual(1);
   });
 });
